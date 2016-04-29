@@ -1,0 +1,44 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1348\cocoasubrtf170
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red64\green11\blue217;\red135\green138\blue4;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 select * from ( select brightStarID from BrightStars where decl <=4 order by brightStarID limit %d, %d) o join BrightStars l on l.brightStarID=o.brightStarID order by brightStarID\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f1\fs22 \cf2 \CocoaLigature0 CREATE TABLE `BrightStarsLSST` (\cf0 \
+\cf2    `brightStarID` bigint(16) NOT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `starID` bigint(16) DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `ra` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `decl` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `muRA` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `muDecl` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magB` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magV` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magU` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magG` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magR` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magI` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magZ` double DEFAULT NULL\cf0 \cb3 ,\cf2 \cb1 \
+   `magY` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magJ` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magH` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magK` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `w1` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `w2` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `w3` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `w4` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `magSST` double DEFAULT NULL\cf0 \cb3 ,\cb1 \
+\cf2    `flag` double DEFAULT NULL\cf0 \
+\cf2  ) ENGINE=MyISAM DEFAULT CHARSET=big5;\cf0 \
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 \CocoaLigature1 select * from ( select brightStarID from BrightStars 
+\f1\fs22 \cf2 \CocoaLigature0 where (ra >= 358 or ra <=14) and (decl > 4 and decl <= 32)
+\f0\fs24 \cf0 \CocoaLigature1  order by brightStarID limit %d, %d) o join BrightStars l on l.brightStarID=o.brightStarID order by brightStarID\
+\
+}
