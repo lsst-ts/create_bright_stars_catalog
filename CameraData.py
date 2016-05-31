@@ -10,15 +10,11 @@ from lsst.afw.cameraGeom import WAVEFRONT
 # instantiate the LSST camera model
 from lsst.obs.lsstSim import LsstSimMapper
 
-class CameraData:
-    __camera = None
-
-    # assemble a list of wavefront detectors
-    __wavefrontDetectors = [] # this will be a list of the actual detectors
-    __wavefrontCorners = [] # this will be a list of the x, y coordinates of the detectors' corners
-    
+class CameraData(object):
     def __init__(self):
         self.__camera = LsstSimMapper().camera
+        self.__wavefrontDetectors = [] # this will be a list of the actual detectors
+        self.__wavefrontCorners = [] # this will be a list of the x, y coordinates of the detectors' corners
         self.initializeWavefrontDetectors()
                                            
     def initializeWavefrontDetectors(self):
