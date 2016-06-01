@@ -15,10 +15,37 @@ class BrightStarDatabase(object):
         self.cursor = None
     
     def connect(self, host, port, user, password, database):
+        """
+        Connects to the MariaDB database.
+        
+        @param host [in] The host name / ip of the database.
+        
+        @param port [in] The port to connect on.
+        
+        @param user [in] The user name to connect as.
+        
+        @param password [in] The password for the user.
+        
+        @param database [in] The database to use.
+        """
         self.connection = pymysql.connect(host=host, port=port, user=user, passwd=password, db=database)
         self.cursor = self.connection.cursor()
         
     def query(self, filter, corner1, corner2, corner3, corner4):
+        """
+        Queries the database for stars within an area.
+        
+        @param filter [in] The filter to query.
+        Valid values are (U, G, R, I, Z, Y).
+        
+        @param corner1 [in] The first corner of the sensor defined as (RA, Decl).
+        
+        @param corner2 [in] The second corner of the sensor defined as (RA, Decl).
+        
+        @param corner3 [in] The third corner of the sensor defined as (RA, Decl).
+        
+        @param corner4 [in] The fourth corner of the sensor defined as (RA, Decl).
+        """
         ra = [corner1[0], corner2[0], corner3[0], corner4[0]]
         decl = [corner1[1], corner2[1], corner3[1], corner4[1]]
         top = max(decl)
@@ -40,6 +67,9 @@ class BrightStarDatabase(object):
         return StarData.StarData(id, ra, decl, mag)
         
     def disconnect(self):
+        """
+        Disconnects from the database.
+        """
         self.cursor.close()
         self.connection.close()
         

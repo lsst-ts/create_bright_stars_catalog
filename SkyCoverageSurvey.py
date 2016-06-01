@@ -18,6 +18,18 @@ class SkyCoverageResult(object):
     
 class SkyCoverageSurvey(object):
     def processStars(self, stars, lowMagnitude, highMagnitude, maxDistance):
+        """
+        Takes a list of stars and determines which stars are canidates for wave front sensing by looking at their
+        distance from the edge of the detector, and their magnitude.
+        
+        @param stars [in] The input set of stars that are on the detector and have had their *InMM fields populated.
+        
+        @param lowMagnitude [in] The minimum magnitude (magnitude that causes detector saturation).
+        
+        @param highMagnitude [in] The maximum magnitude (magnitude that is too dim to get good signal to noise).
+        
+        @param maxDistance [in] The maximum distance in mm to check around a canidate star.
+        """
         allStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in range(len(stars.RAInMM))]
         canidateStar = [index for index in range(len(stars.RAInMM)) if self.isCanidateStar(lowMagnitude, highMagnitude, maxDistance, stars.RAInPixel[index], stars.DeclInPixel[index], stars.Mag[index])]
         canidateStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in canidateStar]
@@ -46,6 +58,22 @@ class SkyCoverageSurvey(object):
         return result
         
     def isCanidateStar(self, lowMagnitude, highMagnitude, maxDistance, raInPixel, declInPixel, mag):
+        """
+        Returns true if the canidate star is far enough away from the edge of the sensor and is in
+        the proper magnitude range.
+        
+        @param lowMagnitude [in] The minimum magnitude (magnitude that causes detector saturation).
+        
+        @param highMagnitude [in] The maximum magnitude (magnitude that is too dim to get good signal to noise).
+        
+        @param maxDistance [in] The maximum distance in mm to check around a canidate star.
+        
+        @param raInPixel [in] The RA pixel coordinate of the star in question.
+        
+        @param declInPixel [in] The Decl pixel coordinate of the star in question.
+        
+        @param mag [in] The magnitude of the star in question.
+        """
         maxDistanceInPixel = maxDistance / StarData.PixelSizeInMM
         return (raInPixel >= (MinRAPixel + maxDistanceInPixel) and raInPixel <= (MaxRAPixel - maxDistanceInPixel)) and \
             (declInPixel >= (MinDeclPixel + maxDistanceInPixel) and declInPixel <= (MaxDeclPixel - maxDistanceInPixel)) and \

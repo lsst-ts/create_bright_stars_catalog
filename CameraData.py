@@ -18,6 +18,9 @@ class CameraData(object):
         self.initializeWavefrontDetectors()
                                            
     def initializeWavefrontDetectors(self):
+        """
+        Initializes the camera wave front detectors.
+        """
         for detector in self.__camera:
                 if detector.getType() == WAVEFRONT:
                     self.__wavefrontDetectors.append(detector)
@@ -62,6 +65,13 @@ class CameraData(object):
         return ra_dec_out
         
     def populatePixelFromRADecl(self, stars, obs):
+        """
+        Populates the RAInPixel and DeclInPixel coordinates in the StarData stars using the lsst-sims stack.
+        
+        @param stars [in/out] The stars to populate.
+        
+        @param obs [in] The observation meta data (found in the lsst-sims stack) that defines the pointing.
+        """
         ra = stars.RA
         decl = stars.Decl
         raInPixel, declInPixel = pixelCoordsFromRaDec(
@@ -74,9 +84,16 @@ class CameraData(object):
            includeDistortion = True)
         stars.populateRAData(raInPixel)
         stars.populateDeclData(declInPixel)
-        return stars
+        return
         
     def removeStarsNotOnDetector(self, stars, obs):
+        """
+        Removes the stars from the StarData stars that are not on the detector.
+                
+        @param stars [in/out] The input set of stars.
+        
+        @param obs [in] The observation meta data (found in the lsst-sims stack) that defines the pointing.
+        """
         detectors = self.wavefrontFromRaDec(stars.RA, stars.Decl, obs)
         keep = [index for index in range(len(stars.ID)) if detectors[index] == stars.Detector]
         stars.ID = [stars.ID[index] for index in keep]

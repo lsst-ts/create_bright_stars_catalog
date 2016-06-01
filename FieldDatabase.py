@@ -7,6 +7,9 @@ class FieldDatabase(object):
         self.__acceptableRADecl = acceptableRADecl
 
     def getRADecl(self):
+        """
+        Returns a filtered list of RA and Decl values to look at.
+        """
         rawData = numpy.loadtxt(self.__file)
         return [x[0] for x in rawData if self.__acceptableRADecl(x)], [x[1] for x in rawData if self.__acceptableRADecl(x)]
         

@@ -15,13 +15,28 @@ class StarData(object):
         self.Mag = mag
         
     def populateDetector(self, detector):
+        """
+        Populates the detector information for this set of stars.
+        
+        @param detector [in] The name of the detector.
+        """
         self.Detector = detector
         
     def populateRAData(self, raInPixel):
+        """
+        Populates the RA pixel and mm data for this set of stars.
+        
+        @param raInPixel [in] The ra pixel coordinate each star falls on the detector.
+        """
         self.RAInPixel = raInPixel
         self.RAInMM = [x * PixelSizeInMM for x in self.RAInPixel]
         
     def populateDeclData(self, declInPixel):
+        """
+        Populates the Decl pixel and mm data for this set of stars.
+        
+        @param declInPixel [in] The decl pixel coordinate each star falls on the detector.
+        """
         self.DeclInPixel = declInPixel
         self.DeclInMM = [x * PixelSizeInMM for x in self.DeclInPixel]
         
