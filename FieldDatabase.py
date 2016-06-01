@@ -12,7 +12,7 @@ class FieldDatabase(object):
         
 class FieldDatabaseTest(unittest.TestCase):
     def testConstructor(self):
-        ra, decl = FieldDatabase(".\Fields.txt", lambda x: x[1] <= 2 or (x[0] >= 0 and x[0] <= 12 and x[1] <= 30)).getRADecl()
+        ra, decl = FieldDatabase("Fields.txt", lambda x: x[1] <= 2 or (x[0] >= 0 and x[0] <= 12 and x[1] <= 30)).getRADecl()
         self.assertEqual(len(ra), 2782)
         self.assertEqual(min(ra), 0.0)
         self.assertEqual(max(ra), 358.475901)

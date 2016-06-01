@@ -1,10 +1,10 @@
 import unittest
 
-PixelSizeInMM = 0.00015
+PixelSizeInMM = 0.01
 
 class StarData(object):
     def __init__(self, id, ra, decl, mag):
-        self.Detector = ""
+        self.Detector = "" 
         self.ID = id
         self.RA = ra
         self.RAInPixel = []

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 from lsst.sims.utils import ObservationMetaData
 from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords, _pupilCoordsFromRaDec
 

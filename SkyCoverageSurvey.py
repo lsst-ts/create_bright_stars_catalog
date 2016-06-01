@@ -4,6 +4,11 @@ import scipy.spatial
 import StarData
 import unittest
 
+MinRAPixel = 0
+MaxRAPixel = 4095
+MinDeclPixel = 0
+MaxDeclPixel = 2047
+
 class SkyCoverageResult(object):
     def __init__(self):
         self.Index = []
@@ -14,30 +19,38 @@ class SkyCoverageResult(object):
 class SkyCoverageSurvey(object):
     def processStars(self, stars, lowMagnitude, highMagnitude, maxDistance):
         allStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in range(len(stars.RAInMM))]
-        canidateStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in range(len(stars.RAInMM)) if (stars.Mag[index] >= lowMagnitude and stars.Mag[index] <= highMagnitude)]
-        canidateStar = [index for index in range(len(stars.RAInMM)) if (stars.Mag[index] >= lowMagnitude and stars.Mag[index] <= highMagnitude)]
-        starDistances = scipy.spatial.distance.cdist(canidateStarData, allStarData)
+        canidateStar = [index for index in range(len(stars.RAInMM)) if self.isCanidateStar(lowMagnitude, highMagnitude, maxDistance, stars.RAInPixel[index], stars.DeclInPixel[index], stars.Mag[index])]
+        canidateStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in canidateStar]
         result = SkyCoverageResult()
-        for canidateIndex in range(len(canidateStarData)):
-            canidateDistances = starDistances[canidateIndex]
-            numberBelowCriteria = 0
-            numberInCriteria = -1
-            numberAboveCriteria = 0
-            for index in range(len(allStarData)):
-                distance = canidateDistances[index]
-                if distance <= maxDistance:
-                    if stars.Mag[index] < lowMagnitude:
-                        numberBelowCriteria += 1
-                    elif stars.Mag[index] > highMagnitude:
-                        numberAboveCriteria += 1
-                    else:
-                        numberInCriteria += 1
+        if len(canidateStarData) > 0:
+            starDistances = scipy.spatial.distance.cdist(canidateStarData, allStarData)
+            for canidateIndex in range(len(canidateStarData)):
+                canidateDistances = starDistances[canidateIndex]
+                numberBelowCriteria = 0
+                numberInCriteria = -1
+                numberAboveCriteria = 0
+                for index in range(len(allStarData)):
+                    distance = canidateDistances[index]
+                    if distance <= maxDistance:
+                        if stars.Mag[index] < lowMagnitude:
+                            numberBelowCriteria += 1
+                        elif stars.Mag[index] > highMagnitude:
+                            numberAboveCriteria += 1
+                        else:
+                            numberInCriteria += 1
 
-            result.Index.append(canidateStar[canidateIndex])
-            result.NumberBelowCriteria.append(numberBelowCriteria)
-            result.NumberInCriteria.append(numberInCriteria)
-            result.NumberAboveCriteria.append(numberAboveCriteria)
+                result.Index.append(canidateStar[canidateIndex])
+                result.NumberBelowCriteria.append(numberBelowCriteria)
+                result.NumberInCriteria.append(numberInCriteria)
+                result.NumberAboveCriteria.append(numberAboveCriteria)
         return result
+        
+    def isCanidateStar(self, lowMagnitude, highMagnitude, maxDistance, raInPixel, declInPixel, mag):
+        maxDistanceInPixel = maxDistance / StarData.PixelSizeInMM
+        return (raInPixel >= (MinRAPixel + maxDistanceInPixel) and raInPixel <= (MaxRAPixel - maxDistanceInPixel)) and \
+            (declInPixel >= (MinDeclPixel + maxDistanceInPixel) and declInPixel <= (MaxDeclPixel - maxDistanceInPixel)) and \
+            mag >= lowMagnitude and \
+            mag <= highMagnitude
         
 class SkyCoverageSurveyTest(unittest.TestCase):
     stars = None

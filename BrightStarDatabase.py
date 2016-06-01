@@ -11,8 +11,8 @@ FilterY = "Y"
 
 class BrightStarDatabase(object):
     def __init__(self):
-        self._connection = None
-        self._cursor = None
+        self.connection = None
+        self.cursor = None
     
     def connect(self, host, port, user, password, database):
         self.connection = pymysql.connect(host=host, port=port, user=user, passwd=password, db=database)
