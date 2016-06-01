@@ -62,6 +62,7 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
                 summaryFile.write(",\"Detector %s Corners (RA, Decl)\",%f,%f,%f,%f,%f,%f,%f,%f\r\n" % (detector, wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1]))
                 stars = brightStarDatabase.query(cameraFilter, wavefrontSensor[0], wavefrontSensor[1], wavefrontSensor[2], wavefrontSensor[3])
                 summaryFile.write(",,Stars Queried,%d\r\n" % len(stars.ID))
+                print "Queried %d stars" % len(stars.ID)
                 stars.populateDetector(detector)
                 camera.removeStarsNotOnDetector(stars, obs)
                 summaryFile.write(",,Stars On Detector,%d\r\n" % len(stars.ID))
