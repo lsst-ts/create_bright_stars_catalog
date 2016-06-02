@@ -92,10 +92,20 @@ class SkyCoverageSurveyTest(unittest.TestCase):
     def tearDown(self):
         self.stars = None
         self.survey = None
+        
+    def testNoCanidateStars(self):
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
+        data = self.survey.processStars(self.stars, 10, 10, 2.4)
+        self.assertEqual(len(data.Index), 0)
+        self.assertEqual(len(data.NumberBelowCriteria), 0)
+        self.assertEqual(len(data.NumberInCriteria), 0)
+        self.assertEqual(len(data.NumberAboveCriteria), 0)
 
     def test1Bright(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
+        print self.stars.RAInPixel
         data = self.survey.processStars(self.stars, 8, 8, 2.4)
         self.assertEqual(len(data.Index), 1)
         self.assertEqual(len(data.NumberBelowCriteria), 1)
@@ -107,8 +117,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[0], 0)
     
     def test2Bright(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 9, 9, 4)
         self.assertEqual(len(data.Index), 1)
         self.assertEqual(len(data.NumberBelowCriteria), 1)
@@ -120,8 +130,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[0], 0)
     
     def test1Ok(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 8, 2.4)
         self.assertEqual(len(data.Index), 2)
         self.assertEqual(len(data.NumberBelowCriteria), 2)
@@ -137,8 +147,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[1], 0)
     
     def test2Ok(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 9, 4)
         self.assertEqual(len(data.Index), 3)
         self.assertEqual(len(data.NumberBelowCriteria), 3)
@@ -158,8 +168,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[2], 0)
     
     def test1Dim(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 7, 2.4)
         self.assertEqual(len(data.Index), 1)
         self.assertEqual(len(data.NumberBelowCriteria), 1)
@@ -171,8 +181,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[0], 1)
 
     def test2Dim(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 7, 4)
         self.assertEqual(len(data.Index), 1)
         self.assertEqual(len(data.NumberBelowCriteria), 1)
@@ -184,8 +194,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[0], 2)
     
     def test1Bright1Ok(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 8, 9, 4)
         self.assertEqual(len(data.Index), 2)
         self.assertEqual(len(data.NumberBelowCriteria), 2)
@@ -201,8 +211,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[1], 0)
     
     def test1Ok1Dim(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 8, 4)
         self.assertEqual(len(data.Index), 2)
         self.assertEqual(len(data.NumberBelowCriteria), 2)
@@ -218,8 +228,8 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.assertEqual(data.NumberAboveCriteria[1], 1)
    
     def test1Dim1Bright(self):
-        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [1, 2, 5]])
-        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [1, 3, 1]])
+        self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
+        self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 8, 8, 4)
         self.assertEqual(len(data.Index), 1)
         self.assertEqual(len(data.NumberBelowCriteria), 1)
