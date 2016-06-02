@@ -2,6 +2,7 @@ import BrightStarDatabase
 import FieldDatabase
 import CameraData
 import SkyCoverageSurvey
+import time
 
 from lsst.sims.utils import ObservationMetaData
 
@@ -30,6 +31,7 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
         summaryFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
         summaryFile.write("High Magnitude,%f\r\n" % highMagnitude)
         summaryFile.write("Max Distance,%f\r\n" % maxDistance)
+        summaryFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CamerRA", "CameraDecl", "Detector", "Corner1RA", "Corner1Decl", "Corner2RA", "Corner2Decl", "Corner3RA", "Corner3Decl", "Corner4RA", "Corner4Decl", "Stars Queried", "Stars on Detector", "Canidate Stars"))
     
         # Create detail file
         # The detail file will contain low level information about each canidate star in each field on each detector
@@ -39,7 +41,7 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
         detailedFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
         detailedFile.write("High Magnitude,%f\r\n" % highMagnitude)
         detailedFile.write("Max Distance,%f\r\n" % maxDistance)
-        detailedFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("CamerRA", "CameraDecl", "Detector", "StarID", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors"))
+        detailedFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CamerRA", "CameraDecl", "Detector", "StarID", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors"))
         
         # Setup databases, simulations, and survey
         brightStarDatabase = BrightStarDatabase.BrightStarDatabase()
@@ -54,35 +56,39 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
         fieldRA, fieldDecl = fieldDatabase.getRADecl()
         for index in range(len(fieldRA)):
             print "Field #%d of %d" % ((index + 1), len(fieldRA))
-            summaryFile.write("Field Position (RA, Decl),%f,%f\r\n" % (fieldRA[index], fieldDecl[index]))
             
             # Get corners of wavefront sensors for this observation field
             obs = ObservationMetaData(pointingRA=fieldRA[index], pointingDec=fieldDecl[index], rotSkyPos=cameraRotation, mjd=cameraMJD)
             wavefrontSensors = camera.getWavefrontCorners(obs)
             for detector in wavefrontSensors:
-                print "Processing detector %s" % detector
+                print "\tProcessing detector %s" % detector
                 wavefrontSensor = wavefrontSensors[detector]
-                summaryFile.write(",\"Detector %s Corners (RA, Decl)\",%f,%f,%f,%f,%f,%f,%f,%f\r\n" % (detector, wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1]))
                 
                 # Get stars in this wavefront sensor for this observation field
                 stars = brightStarDatabase.query(cameraFilter, wavefrontSensor[0], wavefrontSensor[1], wavefrontSensor[2], wavefrontSensor[3])
-                print "Stars queried %d" % len(stars.ID)
-                summaryFile.write(",,Stars Queried,%d\r\n" % len(stars.ID))
+                starsQueried = len(stars.ID)
+                print "\t\tStars queried %d" % starsQueried
                 
                 # Populate detector information for the stars
                 stars.populateDetector(detector)
                 
                 # Remove stars that are not on the detector
                 camera.removeStarsNotOnDetector(stars, obs)
-                print "Stars on detector %d" % len(stars.ID)                
-                summaryFile.write(",,Stars On Detector,%d\r\n" % len(stars.ID))
+                starsOnDetector = len(stars.ID)
+                print "\t\tStars on detector %d" % starsOnDetector
                 
                 # Populate pixel information for stars
                 camera.populatePixelFromRADecl(stars, obs)
                 
                 # Process star data
                 results = survey.processStars(stars, lowMagnitude, highMagnitude, maxDistance)
-                summaryFile.write(",,Canidate Stars,%d\r\n" % len(results.Index))
+                canidateStars = len(results.Index)
+                print "\t\tCanidate stars %d" % canidateStars
+                
+                # Log summary results
+                currentTime = time.time()
+                summaryFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], detector, wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1], starsQueried, starsOnDetector, canidateStars))
+                
                 # Log detailed results
                 for resultIndex in range(len(results.Index)):
                     cameraRA = fieldRA[index]
@@ -96,7 +102,7 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
                     brightNeighbors = results.NumberBelowCriteria[resultIndex]
                     okNeighbors = results.NumberInCriteria[resultIndex]
                     dimNeighbors = results.NumberAboveCriteria[resultIndex]
-                    detailedFile.write("%f,%f,\"%s\",%d,%f,%f,%f,%d,%d,%d\r\n" % (cameraRA, cameraDecl, detector, starID, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors))    
+                    detailedFile.write("%f,%d,%f,%f,\"%s\",%d,%f,%f,%f,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starID, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors))    
     finally:
         # Clean up
         summaryFile.close()
