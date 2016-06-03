@@ -19,7 +19,7 @@ class SkyCoverageResult(object):
 class SkyCoverageSurvey(object):
     def processStars(self, stars, lowMagnitude, highMagnitude, maxDistance):
         """
-        Takes a list of stars and determines which stars are canidates for wave front sensing by looking at their
+        Takes a list of stars and determines which stars are candidates for wave front sensing by looking at their
         distance from the edge of the detector, and their magnitude.
         
         @param stars [in] The input set of stars that are on the detector and have had their *InMM fields populated.
@@ -28,21 +28,21 @@ class SkyCoverageSurvey(object):
         
         @param highMagnitude [in] The maximum magnitude (magnitude that is too dim to get good signal to noise).
         
-        @param maxDistance [in] The maximum distance in mm to check around a canidate star.
+        @param maxDistance [in] The maximum distance in mm to check around a candidate star.
         """
         allStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in range(len(stars.RAInMM))]
-        canidateStar = [index for index in range(len(stars.RAInMM)) if self.isCanidateStar(lowMagnitude, highMagnitude, maxDistance, stars.RAInPixel[index], stars.DeclInPixel[index], stars.Mag[index])]
-        canidateStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in canidateStar]
+        candidateStar = [index for index in range(len(stars.RAInMM)) if self.isCandidateStar(lowMagnitude, highMagnitude, maxDistance, stars.RAInPixel[index], stars.DeclInPixel[index], stars.Mag[index])]
+        candidateStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in candidateStar]
         result = SkyCoverageResult()
-        if len(canidateStarData) > 0:
-            starDistances = scipy.spatial.distance.cdist(canidateStarData, allStarData)
-            for canidateIndex in range(len(canidateStarData)):
-                canidateDistances = starDistances[canidateIndex]
+        if len(candidateStarData) > 0:
+            starDistances = scipy.spatial.distance.cdist(candidateStarData, allStarData)
+            for candidateIndex in range(len(candidateStarData)):
+                candidateDistances = starDistances[candidateIndex]
                 numberBelowCriteria = 0
                 numberInCriteria = -1
                 numberAboveCriteria = 0
                 for index in range(len(allStarData)):
-                    distance = canidateDistances[index]
+                    distance = candidateDistances[index]
                     if distance <= maxDistance:
                         if stars.Mag[index] < lowMagnitude:
                             numberBelowCriteria += 1
@@ -51,22 +51,22 @@ class SkyCoverageSurvey(object):
                         else:
                             numberInCriteria += 1
 
-                result.Index.append(canidateStar[canidateIndex])
+                result.Index.append(candidateStar[candidateIndex])
                 result.NumberBelowCriteria.append(numberBelowCriteria)
                 result.NumberInCriteria.append(numberInCriteria)
                 result.NumberAboveCriteria.append(numberAboveCriteria)
         return result
         
-    def isCanidateStar(self, lowMagnitude, highMagnitude, maxDistance, raInPixel, declInPixel, mag):
+    def isCandidateStar(self, lowMagnitude, highMagnitude, maxDistance, raInPixel, declInPixel, mag):
         """
-        Returns true if the canidate star is far enough away from the edge of the sensor and is in
+        Returns true if the candidate star is far enough away from the edge of the sensor and is in
         the proper magnitude range.
         
         @param lowMagnitude [in] The minimum magnitude (magnitude that causes detector saturation).
         
         @param highMagnitude [in] The maximum magnitude (magnitude that is too dim to get good signal to noise).
         
-        @param maxDistance [in] The maximum distance in mm to check around a canidate star.
+        @param maxDistance [in] The maximum distance in mm to check around a candidate star.
         
         @param raInPixel [in] The RA pixel coordinate of the star in question.
         
@@ -93,7 +93,7 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.stars = None
         self.survey = None
         
-    def testNoCanidateStars(self):
+    def testNoCandidateStars(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 10, 10, 2.4)

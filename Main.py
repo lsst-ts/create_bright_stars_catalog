@@ -31,10 +31,10 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
         summaryFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
         summaryFile.write("High Magnitude,%f\r\n" % highMagnitude)
         summaryFile.write("Max Distance,%f\r\n" % maxDistance)
-        summaryFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CamerRA", "CameraDecl", "Detector", "Corner1RA", "Corner1Decl", "Corner2RA", "Corner2Decl", "Corner3RA", "Corner3Decl", "Corner4RA", "Corner4Decl", "Stars Queried", "Stars on Detector", "Canidate Stars"))
+        summaryFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CamerRA", "CameraDecl", "Detector", "Corner1RA", "Corner1Decl", "Corner2RA", "Corner2Decl", "Corner3RA", "Corner3Decl", "Corner4RA", "Corner4Decl", "Stars Queried", "Stars on Detector", "Candidate Stars"))
     
         # Create detail file
-        # The detail file will contain low level information about each canidate star in each field on each detector
+        # The detail file will contain low level information about each candidate star in each field on each detector
         detailedFile = open(detailedFilePath, "w+")
         detailedFile.write("Camera Rotation,%f\r\n" % cameraRotation)
         detailedFile.write("Camera Filter,%s\r\n" % cameraFilter)
@@ -82,12 +82,12 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
                 
                 # Process star data
                 results = survey.processStars(stars, lowMagnitude, highMagnitude, maxDistance)
-                canidateStars = len(results.Index)
-                print "\t\tCanidate stars %d" % canidateStars
+                candidateStars = len(results.Index)
+                print "\t\tCandidate stars %d" % candidateStars
                 
                 # Log summary results
                 currentTime = time.time()
-                summaryFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], detector, wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1], starsQueried, starsOnDetector, canidateStars))
+                summaryFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], detector, wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1], starsQueried, starsOnDetector, candidateStars))
                 
                 # Log detailed results
                 for resultIndex in range(len(results.Index)):
