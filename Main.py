@@ -3,8 +3,10 @@ import FieldDatabase
 import CameraData
 import SkyCoverageSurvey
 import time
+import itertools
 
 from lsst.sims.utils import ObservationMetaData
+from multiprocessing import Pool, freeze_support
 
 brightStarDatabaseHost = "140.252.32.27"
 brightStarDatabasePort = 3306
@@ -109,34 +111,51 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
         detailedFile.close()
         brightStarDatabase.disconnect()
 
+def star_runSurvey(args):
+    return runSurvey(*args)
+            
 surveyData = [
 #    Filter                      mm   sat    lim
     [BrightStarDatabase.FilterU, 1.0,  8.82, 15.68],
-#    [BrightStarDatabase.FilterU, 1.5,  7.94, 14.80],
-#    [BrightStarDatabase.FilterU, 2.0,  7.32, 14.17],
-#    [BrightStarDatabase.FilterG, 1.0, 10.62, 17.05],
-#    [BrightStarDatabase.FilterG, 1.5,  9.74, 16.17],
-#    [BrightStarDatabase.FilterG, 2.0,  9.12, 15.54],
-#    [BrightStarDatabase.FilterR, 1.0, 10.44, 16.61],
-#    [BrightStarDatabase.FilterR, 1.5,  9.56, 15.73],
-#    [BrightStarDatabase.FilterR, 2.0,  8.93, 15.10],
-#    [BrightStarDatabase.FilterI, 1.0, 10.10, 16.14],
-#    [BrightStarDatabase.FilterI, 1.5,  9.22, 15.26],
-#    [BrightStarDatabase.FilterI, 2.0,  8.60, 14.63],
-#    [BrightStarDatabase.FilterZ, 1.0,  9.71, 15.56],
-#    [BrightStarDatabase.FilterZ, 1.5,  8.83, 14.68],
-#    [BrightStarDatabase.FilterZ, 2.0,  8.21, 14.06],
-#    [BrightStarDatabase.FilterY, 1.0,  8.90, 14.64],
-#    [BrightStarDatabase.FilterY, 1.5,  8.02, 13.76],
-#    [BrightStarDatabase.FilterY, 2.0,  7.39, 13.13]
+    [BrightStarDatabase.FilterU, 1.5,  7.94, 14.80],
+    [BrightStarDatabase.FilterU, 2.0,  7.32, 14.17],
+    [BrightStarDatabase.FilterG, 1.0, 10.62, 17.05],
+    [BrightStarDatabase.FilterG, 1.5,  9.74, 16.17],
+    [BrightStarDatabase.FilterG, 2.0,  9.12, 15.54],
+    [BrightStarDatabase.FilterR, 1.0, 10.44, 16.61],
+    [BrightStarDatabase.FilterR, 1.5,  9.56, 15.73],
+    [BrightStarDatabase.FilterR, 2.0,  8.93, 15.10],
+    [BrightStarDatabase.FilterI, 1.0, 10.10, 16.14],
+    [BrightStarDatabase.FilterI, 1.5,  9.22, 15.26],
+    [BrightStarDatabase.FilterI, 2.0,  8.60, 14.63],
+    [BrightStarDatabase.FilterZ, 1.0,  9.71, 15.56],
+    [BrightStarDatabase.FilterZ, 1.5,  8.83, 14.68],
+    [BrightStarDatabase.FilterZ, 2.0,  8.21, 14.06],
+    [BrightStarDatabase.FilterY, 1.0,  8.90, 14.64],
+    [BrightStarDatabase.FilterY, 1.5,  8.02, 13.76],
+    [BrightStarDatabase.FilterY, 2.0,  7.39, 13.13]
     ]
     
-# Run survey using data defined above
-for item in surveyData:
-    runSurvey(
-        cameraFilter = item[0], 
-        lowMagnitude = item[2], 
-        highMagnitude = item[3], 
-        maxDistance = item[1],
-        summaryFilePath = "%sSurveySummary-%s-%fmm.csv" % (outputPath, item[0], item[1]),
-        detailedFilePath = "%sSurveyDetail-%s-%fmm.csv" % (outputPath, item[0], item[1]))
+# Run survey using data defined above in a single thread environment
+def runSingleThread():
+    for item in surveyData:
+        runSurvey(
+            cameraFilter = item[0], 
+            lowMagnitude = item[2], 
+            highMagnitude = item[3], 
+            maxDistance = item[1],
+            summaryFilePath = "%sSurveySummary-%s-%fmm.csv" % (outputPath, item[0], item[1]),
+            detailedFilePath = "%sSurveyDetail-%s-%fmm.csv" % (outputPath, item[0], item[1]))
+          
+# Run survey using data defined above in a multi threaded environment
+def runMultiThread():
+    pool = Pool()
+    args = []
+    for item in surveyData:
+        args.append((item[0], item[2], item[3], item[1], "%sSurveySummary-%s-%fmm.csv" % (outputPath, item[0], item[1]), "%sSurveyDetail-%s-%fmm.csv" % (outputPath, item[0], item[1])))
+    pool.map(star_runSurvey, args)
+       
+if __name__ == "__main__":
+    freeze_support()
+    runMultiThread()
+    
