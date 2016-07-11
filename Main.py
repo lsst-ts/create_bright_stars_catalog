@@ -2,6 +2,7 @@ import BrightStarDatabase
 import FieldDatabase
 import CameraData
 import SkyCoverageSurvey
+import StarData
 import time
 import itertools
 
@@ -115,25 +116,25 @@ def star_runSurvey(args):
     return runSurvey(*args)
             
 surveyData = [
-#    Filter                      mm   sat    lim
-    [BrightStarDatabase.FilterU, 1.0,  8.82, 15.68],
-    [BrightStarDatabase.FilterU, 1.5,  7.94, 14.80],
-    [BrightStarDatabase.FilterU, 2.0,  7.32, 14.17],
-    [BrightStarDatabase.FilterG, 1.0, 10.62, 17.05],
-    [BrightStarDatabase.FilterG, 1.5,  9.74, 16.17],
-    [BrightStarDatabase.FilterG, 2.0,  9.12, 15.54],
-    [BrightStarDatabase.FilterR, 1.0, 10.44, 16.61],
-    [BrightStarDatabase.FilterR, 1.5,  9.56, 15.73],
-    [BrightStarDatabase.FilterR, 2.0,  8.93, 15.10],
-    [BrightStarDatabase.FilterI, 1.0, 10.10, 16.14],
-    [BrightStarDatabase.FilterI, 1.5,  9.22, 15.26],
-    [BrightStarDatabase.FilterI, 2.0,  8.60, 14.63],
-    [BrightStarDatabase.FilterZ, 1.0,  9.71, 15.56],
-    [BrightStarDatabase.FilterZ, 1.5,  8.83, 14.68],
-    [BrightStarDatabase.FilterZ, 2.0,  8.21, 14.06],
-    [BrightStarDatabase.FilterY, 1.0,  8.90, 14.64],
-    [BrightStarDatabase.FilterY, 1.5,  8.02, 13.76],
-    [BrightStarDatabase.FilterY, 2.0,  7.39, 13.13]
+#    Filter                      pix -> mm                    sat    lim
+    [BrightStarDatabase.FilterU, 42 * StarData.PixelSizeInMM,  8.82, 15.68],
+    [BrightStarDatabase.FilterU, 63 * StarData.PixelSizeInMM,  7.94, 14.80],
+    [BrightStarDatabase.FilterU, 84 * StarData.PixelSizeInMM,  7.32, 14.17],
+    [BrightStarDatabase.FilterG, 42 * StarData.PixelSizeInMM, 10.62, 17.05],
+    [BrightStarDatabase.FilterG, 63 * StarData.PixelSizeInMM,  9.74, 16.17],
+    [BrightStarDatabase.FilterG, 84 * StarData.PixelSizeInMM,  9.12, 15.54],
+    [BrightStarDatabase.FilterR, 42 * StarData.PixelSizeInMM, 10.44, 16.61],
+    [BrightStarDatabase.FilterR, 63 * StarData.PixelSizeInMM,  9.56, 15.73],
+    [BrightStarDatabase.FilterR, 84 * StarData.PixelSizeInMM,  8.93, 15.10],
+    [BrightStarDatabase.FilterI, 42 * StarData.PixelSizeInMM, 10.10, 16.14],
+    [BrightStarDatabase.FilterI, 63 * StarData.PixelSizeInMM,  9.22, 15.26],
+    [BrightStarDatabase.FilterI, 84 * StarData.PixelSizeInMM,  8.60, 14.63],
+    [BrightStarDatabase.FilterZ, 42 * StarData.PixelSizeInMM,  9.71, 15.56],
+    [BrightStarDatabase.FilterZ, 63 * StarData.PixelSizeInMM,  8.83, 14.68],
+    [BrightStarDatabase.FilterZ, 84 * StarData.PixelSizeInMM,  8.21, 14.06],
+    [BrightStarDatabase.FilterY, 42 * StarData.PixelSizeInMM,  8.90, 14.64],
+    [BrightStarDatabase.FilterY, 63 * StarData.PixelSizeInMM,  8.02, 13.76],
+    [BrightStarDatabase.FilterY, 84 * StarData.PixelSizeInMM,  7.39, 13.13]
     ]
     
 # Run survey using data defined above in a single thread environment
