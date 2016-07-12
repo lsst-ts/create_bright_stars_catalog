@@ -18,10 +18,11 @@ brightStarDatabaseDatabase = "BrightStarCatalog"
 fieldDatabaseFile = ".\Fields.txt"
 fieldDatabaseAcceptableRADecl = lambda x: x[1] <= 2 or (x[0] >= 0 and x[0] <= 12 and x[1] <= 30)
 
-cameraRotation = 32.0
+cameraRotation = 0.0
 cameraMJD = 59580.0
 
-spacingCoefficient = 2.0 # Maximum distance in units of radius one donut must be to another to be considered as a neighbor
+spacingCoefficient = 2.5     # Maximum distance in units of radius one donut must be to another to be considered as a neighbor
+checkStarsOnDetector = True # Determine if the stars are on the detector before processing
 
 outputPath = ""
 
@@ -77,14 +78,16 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
                 # Populate detector information for the stars
                 stars.populateDetector(detector)
                 
-                # Remove stars that are not on the detector
-                camera.removeStarsNotOnDetector(stars, obs)
-                starsOnDetector = len(stars.ID)
-                print "\t\tStars on detector %d" % starsOnDetector
-                
                 # Populate pixel information for stars
                 camera.populatePixelFromRADecl(stars, obs)
                 
+                if (checkStarsOnDetector):
+                    # Remove stars that are not on the detector
+                    camera.removeStarsNotOnDetectorSimple(stars, obs)
+
+                starsOnDetector = len(stars.ID)
+                print "\t\tStars on detector %d" % starsOnDetector
+
                 # Process star data
                 results = survey.processStars(stars, lowMagnitude, highMagnitude, maxDistance)
                 candidateStars = len(results.Index)
@@ -108,6 +111,7 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
                     okNeighbors = results.NumberInCriteria[resultIndex]
                     dimNeighbors = results.NumberAboveCriteria[resultIndex]
                     detailedFile.write("%f,%d,%f,%f,\"%s\",%d,%f,%f,%f,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starID, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors))    
+
     finally:
         # Clean up
         summaryFile.close()

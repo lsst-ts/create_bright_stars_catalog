@@ -1,6 +1,7 @@
 import pymysql
 import StarData
 import unittest
+import numpy
 
 FilterU = "U"
 FilterG = "G"
@@ -8,6 +9,8 @@ FilterR = "R"
 FilterI = "I"
 FilterZ = "Z"
 FilterY = "Y"
+
+stddevSplit = 20.0
 
 class BrightStarDatabase(object):
     def __init__(self):
@@ -46,6 +49,7 @@ class BrightStarDatabase(object):
         
         @param corner4 [in] The fourth corner of the sensor defined as (RA, Decl).
         """
+        
         ra = [corner1[0], corner2[0], corner3[0], corner4[0]]
         decl = [corner1[1], corner2[1], corner3[1], corner4[1]]
         top = max(decl)
@@ -53,6 +57,31 @@ class BrightStarDatabase(object):
         left = min(ra)
         right = max(ra)
         
+        raStddev = numpy.std(ra)
+        if raStddev >= stddevSplit:
+            left = max([x for x in ra if x < 180])
+            right = min([x for x in ra if x >= 180])
+            above0Set = self.queryInternal(filter, top, bottom, 0, left)
+            below0Set = self.queryInternal(filter, top, bottom, right, 360)
+            return StarData.StarData(above0Set.ID + below0Set.ID, above0Set.RA + below0Set.RA, above0Set.Decl + below0Set.Decl, above0Set.Mag + below0Set.Mag)
+        else:
+            return self.queryInternal(filter, top, bottom, left, right)
+        
+    def queryInternal(self, filter, top, bottom, left, right):
+        """
+        Queries the database for stars within an area.
+        
+        @param filter [in] The filter to query.
+        Valid values are (U, G, R, I, Z, Y).
+        
+        @param top [in] The top edge of the box (Decl).
+        
+        @param bottom [in] The bottom edge of the box (Decl).
+        
+        @param left [in] The left edge of the box (RA).
+        
+        @param right [in] The right edge of the box (RA).
+        """
         query = "SELECT `id`, `ra`, `decl`, `lsst%s` as `mag` FROM `FilteredCatalog` WHERE `decl` <= %f AND `decl` >= %f AND `ra` >= %f AND `ra` <= %f" % (filter, top, bottom, left, right)
         self.cursor.execute(query)
         id = []

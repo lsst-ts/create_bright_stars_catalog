@@ -98,7 +98,30 @@ class CameraData(object):
         keep = [index for index in range(len(stars.ID)) if detectors[index] == stars.Detector]
         stars.ID = [stars.ID[index] for index in keep]
         stars.RA = [stars.RA[index] for index in keep]
+        stars.RAInPixel = [stars.RAInPixel[index] for index in keep]
+        stars.RAInMM = [stars.RAInMM[index] for index in keep]
         stars.Decl = [stars.Decl[index] for index in keep]
+        stars.DeclInPixel = [stars.DeclInPixel[index] for index in keep]
+        stars.DeclInMM = [stars.DeclInMM[index] for index in keep]
+        stars.Mag = [stars.Mag[index] for index in keep]
+        return
+        
+    def removeStarsNotOnDetectorSimple(self, stars, obs):
+        """
+        Removes the stars from the StarData stars that are not on the detector using pixel data.
+                
+        @param stars [in/out] The input set of stars.
+        
+        @param obs [in] The observation meta data (found in the lsst-sims stack) that defines the pointing.
+        """
+        keep = [index for index in range(len(stars.ID)) if stars.RAInPixel[index] >= 0 and stars.RAInPixel[index] <= 4096 and stars.DeclInPixel[index] >= 0 and stars.DeclInPixel[index] <= 2048]
+        stars.ID = [stars.ID[index] for index in keep]
+        stars.RA = [stars.RA[index] for index in keep]
+        stars.RAInPixel = [stars.RAInPixel[index] for index in keep]
+        stars.RAInMM = [stars.RAInMM[index] for index in keep]
+        stars.Decl = [stars.Decl[index] for index in keep]
+        stars.DeclInPixel = [stars.DeclInPixel[index] for index in keep]
+        stars.DeclInMM = [stars.DeclInMM[index] for index in keep]
         stars.Mag = [stars.Mag[index] for index in keep]
         return
         
@@ -199,19 +222,42 @@ class CameraData(object):
         return self._wavefrontFromPupilCoords(xp, yp, camera=camera, allow_multiple_chips=allow_multiple_chips)
 
 if __name__ == "__main__":
-    # Specify a telescope pointing.
-    # The convention for rotSkyPos can be seen by calling help(ObservationMetaData)
-    # in an interactive python session.
-    obs = ObservationMetaData(pointingRA=25.0, pointingDec=-12.0,
-                              rotSkyPos=32.0, mjd=59580.0)
-                              
-    camera = CameraData()
+    start = 30
+    stop = -90
+    degrees = abs(stop - start) 
+    minutesPerDegree = 5
+    secondsPerMinute = 1
+    scale = 1
+    number = degrees * minutesPerDegree * secondsPerMinute * scale
+    data = np.linspace(start, stop, num = number)
+    dataLen = len(data)
+    summaryFilePath = "foobar.csv"
+    print dataLen
+    map = {
+        "R:0,0 S:2,2,A" : 0,
+        "R:0,0 S:2,2,B" : 1,
+        "R:0,4 S:2,0,A" : 2,
+        "R:0,4 S:2,0,B" : 3,
+        "R:4,0 S:0,2,A" : 4,
+        "R:4,0 S:0,2,B" : 5,
+        "R:4,4 S:0,0,A" : 6,
+        "R:4,4 S:0,0,B" : 7}
 
-    corners = camera.getWavefrontCorners(obs)
-    print corners
-    print "printing out the RA, Dec values of the corners of each wavefront sensor"
-    for wavefront_name in corners:
-        cc = corners[wavefront_name]
-        print "%s (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f)" \
-        %(wavefront_name, cc[0][0], cc[0][1], cc[1][0], cc[1][1],
-        cc[2][0], cc[2][1], cc[3][0], cc[3][1])
+    camera = CameraData()
+    summaryFile = open(summaryFilePath, "w+")
+    summaryFile.write("PointingRA,PointingDec,")
+    for i in range(8):
+        for j in range(4):
+            summaryFile.write("%d-%dRA,%d-%dDec," % (i, j, i, j))
+    summaryFile.write("\r\n")
+    count = 0
+    for item in data:
+        count += 1
+        print "%d of %d" % (count, dataLen)
+        obs = ObservationMetaData(pointingRA=0, pointingDec=item, rotSkyPos=32.0, mjd=59580.0)
+        wavefrontSensors = camera.getWavefrontCorners(obs)
+        line = ""
+        for key in map:
+            wavefrontSensor = wavefrontSensors[key]
+            line = line + "%f,%f,%f,%f,%f,%f,%f,%f" % (wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1])
+        summaryFile.write("%f,%f,%s\r\n" % (item, 0, line))
