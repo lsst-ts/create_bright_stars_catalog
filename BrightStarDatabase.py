@@ -95,6 +95,19 @@ class BrightStarDatabase(object):
             mag.append(item[3])
         return StarData.StarData(id, ra, decl, mag)
         
+    def queryMag(self, filter, corner1, corner2, corner3, corner4):
+        ra = [corner1[0], corner2[0], corner3[0], corner4[0]]
+        decl = [corner1[1], corner2[1], corner3[1], corner4[1]]
+        top = max(decl)
+        bottom = min(decl)
+        left = min(ra)
+        right = max(ra)
+        query = "SELECT `ra`, `decl`, `mag%s`, `lsst%s` FROM `FilteredCatalog` WHERE `decl` <= %f AND `decl` >= %f AND `ra` >= %f AND `ra` <= %f" % (filter, filter, top, bottom, left, right)
+        self.cursor.execute(query)
+        print "%s,%s,%s,%s,%s" % ("RA", "Decl", "Mag", "LSST", "Delta")
+        for item in self.cursor.fetchall():
+            print "%f,%f,%f,%f,%f" % (item[0], item[1], item[2], item[3], (float(item[3]) - float(item[2])))
+        
     def disconnect(self):
         """
         Disconnects from the database.
