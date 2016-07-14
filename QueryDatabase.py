@@ -19,13 +19,14 @@ try:
     brightStarDatabase = BrightStarDatabase.BrightStarDatabase()
     brightStarDatabase.connect(brightStarDatabaseHost, brightStarDatabasePort, brightStarDatabaseUser, brightStarDatabasePassword, brightStarDatabaseDatabase)
     
-    #stars = brightStarDatabase.query(filter, corner1, corner2, corner3, corner4)
-    #    
-    #print "%s,%s,%s" % ("RA", "Decl", "Mag")
-    #for index in range(len(stars.ID)):
-    #    print "%f,%f,%f" % (stars.RA[index], stars.Decl[index], stars.Mag[index])
+    stars = brightStarDatabase.query(filter, corner1, corner2, corner3, corner4)
         
-    brightStarDatabase.queryMag(filter, corner1, corner2, corner3, corner4)
+    print "%s,%s,%s,%s" % ("RA", "Decl", "ObsMag", "LSSTMag")
+    for index in range(len(stars.ID)):
+        print "%f,%f,%f,%f" % (stars.RA[index], stars.Decl[index], stars.ObsMag[index], stars.LSSSTMag[index])
+        
+    #for item in brightStarDatabase.general("SELECT COUNT(`id`) FROM `FilteredCatalog`"):
+    #    print item
     
 finally:
     brightStarDatabase.disconnect()

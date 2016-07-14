@@ -103,7 +103,8 @@ class CameraData(object):
         stars.Decl = [stars.Decl[index] for index in keep]
         stars.DeclInPixel = [stars.DeclInPixel[index] for index in keep]
         stars.DeclInMM = [stars.DeclInMM[index] for index in keep]
-        stars.Mag = [stars.Mag[index] for index in keep]
+        stars.LSSTMag = [stars.LSSTMag[index] for index in keep]
+        stars.ObsMag = [stars.ObsMag[index] for index in keep]
         return
         
     def removeStarsNotOnDetectorSimple(self, stars, obs):
@@ -122,7 +123,8 @@ class CameraData(object):
         stars.Decl = [stars.Decl[index] for index in keep]
         stars.DeclInPixel = [stars.DeclInPixel[index] for index in keep]
         stars.DeclInMM = [stars.DeclInMM[index] for index in keep]
-        stars.Mag = [stars.Mag[index] for index in keep]
+        stars.LSSTMag = [stars.LSSTMag[index] for index in keep]
+        stars.ObsMag = [stars.ObsMag[index] for index in keep]
         return
         
     def _wavefrontFromPupilCoords(self, xPupil, yPupil, camera=None, allow_multiple_chips=False):

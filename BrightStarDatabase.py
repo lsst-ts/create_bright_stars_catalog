@@ -63,7 +63,7 @@ class BrightStarDatabase(object):
             right = min([x for x in ra if x >= 180])
             above0Set = self.queryInternal(filter, top, bottom, 0, left)
             below0Set = self.queryInternal(filter, top, bottom, right, 360)
-            return StarData.StarData(above0Set.ID + below0Set.ID, above0Set.RA + below0Set.RA, above0Set.Decl + below0Set.Decl, above0Set.Mag + below0Set.Mag)
+            return StarData.StarData(above0Set.ID + below0Set.ID, above0Set.RA + below0Set.RA, above0Set.Decl + below0Set.Decl, above0Set.ObsMag + below0Set.ObsMag, above0Set.LSSTMag + below0Set.LSSTMag)
         else:
             return self.queryInternal(filter, top, bottom, left, right)
         
@@ -82,31 +82,24 @@ class BrightStarDatabase(object):
         
         @param right [in] The right edge of the box (RA).
         """
-        query = "SELECT `id`, `ra`, `decl`, `lsst%s` as `mag` FROM `FilteredCatalog` WHERE `decl` <= %f AND `decl` >= %f AND `ra` >= %f AND `ra` <= %f" % (filter, top, bottom, left, right)
+        query = "SELECT `id`, `ra`, `decl`, `mag%s`, `lsst%s` FROM `FilteredCatalog` WHERE `decl` <= %f AND `decl` >= %f AND `ra` >= %f AND `ra` <= %f" % (filter, filter, top, bottom, left, right)
         self.cursor.execute(query)
         id = []
         ra = []
         decl = []
-        mag = []
+        obsMag = []
+        lsstMag = []
         for item in self.cursor.fetchall():
             id.append(item[0])
             ra.append(item[1])
             decl.append(item[2])
-            mag.append(item[3])
-        return StarData.StarData(id, ra, decl, mag)
+            obsMag.append(item[3])
+            lsstMag.append(item[4])
+        return StarData.StarData(id, ra, decl, obsMag, lsstMag)
         
-    def queryMag(self, filter, corner1, corner2, corner3, corner4):
-        ra = [corner1[0], corner2[0], corner3[0], corner4[0]]
-        decl = [corner1[1], corner2[1], corner3[1], corner4[1]]
-        top = max(decl)
-        bottom = min(decl)
-        left = min(ra)
-        right = max(ra)
-        query = "SELECT `ra`, `decl`, `mag%s`, `lsst%s` FROM `FilteredCatalog` WHERE `decl` <= %f AND `decl` >= %f AND `ra` >= %f AND `ra` <= %f" % (filter, filter, top, bottom, left, right)
-        self.cursor.execute(query)
-        print "%s,%s,%s,%s,%s" % ("RA", "Decl", "Mag", "LSST", "Delta")
-        for item in self.cursor.fetchall():
-            print "%f,%f,%f,%f,%f" % (item[0], item[1], item[2], item[3], (float(item[3]) - float(item[2])))
+    def general(self, statement):
+        self.cursor.execute(statement)
+        return self.cursor.fetchall()
         
     def disconnect(self):
         """
@@ -135,7 +128,8 @@ class BrightStarDatabaseTest(unittest.TestCase):
         self.assertEqual(len(stars.ID), 3)
         self.assertEqual(len(stars.RA), 3)
         self.assertEqual(len(stars.Decl), 3)
-        self.assertEqual(len(stars.Mag), 3)
+        self.assertEqual(len(stars.ObsMag), 3)
+        self.assertEqual(len(stars.LSSTMag), 3)
         self.assertEqual(stars.ID[0], 363696272)
         self.assertEqual(stars.ID[1], 365637924)
         self.assertEqual(stars.ID[2], 366149386)
@@ -145,9 +139,12 @@ class BrightStarDatabaseTest(unittest.TestCase):
         self.assertEqual(stars.Decl[0], -1.526383)
         self.assertEqual(stars.Decl[1], -1.15006)
         self.assertEqual(stars.Decl[2], -1.007737)
-        self.assertEqual(stars.Mag[0], 28.7005)
-        self.assertEqual(stars.Mag[1], 34.5597)
-        self.assertEqual(stars.Mag[2], 28.8231)
+        self.assertEqual(stars.ObsMag[0], -99)
+        self.assertEqual(stars.ObsMag[1], -99)
+        self.assertEqual(stars.ObsMag[2], 17.112)
+        self.assertEqual(stars.LSSTMag[0], 28.7005)
+        self.assertEqual(stars.LSSTMag[1], 34.5597)
+        self.assertEqual(stars.LSSTMag[2], 28.8231)
         
 if __name__ == "__main__":
     unittest.main()

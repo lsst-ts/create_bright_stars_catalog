@@ -3,7 +3,7 @@ import unittest
 PixelSizeInMM = 0.01
 
 class StarData(object):
-    def __init__(self, id, ra, decl, mag):
+    def __init__(self, id, ra, decl, obsMag, lsstMag):
         self.Detector = "" 
         self.ID = id
         self.RA = ra
@@ -12,7 +12,8 @@ class StarData(object):
         self.Decl = decl
         self.DeclInPixel = []
         self.DeclInMM = []
-        self.Mag = mag
+        self.LSSTMag = lsstMag
+        self.ObsMag = obsMag
         
     def populateDetector(self, detector):
         """
@@ -44,7 +45,7 @@ class StarDataTest(unittest.TestCase):
     stars = None
     
     def setUp(self):
-        self.stars = StarData([100, 200, 300], [1, 2, 3], [4, 5, 6], [7, 8, 9])
+        self.stars = StarData([100, 200, 300], [1, 2, 3], [4, 5, 6], [10, 11, 12], [7, 8, 9])
 
     def testConstructor(self):
         self.assertEqual(self.stars.ID[0], 100)
@@ -56,9 +57,12 @@ class StarDataTest(unittest.TestCase):
         self.assertEqual(self.stars.Decl[0], 4)
         self.assertEqual(self.stars.Decl[1], 5)
         self.assertEqual(self.stars.Decl[2], 6)
-        self.assertEqual(self.stars.Mag[0], 7)
-        self.assertEqual(self.stars.Mag[1], 8)
-        self.assertEqual(self.stars.Mag[2], 9)
+        self.assertEqual(self.stars.LSSTMag[0], 7)
+        self.assertEqual(self.stars.LSSTMag[1], 8)
+        self.assertEqual(self.stars.LSSTMag[2], 9)
+        self.assertEqual(self.stars.ObsMag[0], 10)
+        self.assertEqual(self.stars.ObsMag[1], 11)
+        self.assertEqual(self.stars.ObsMag[2], 12)
         
     def testDetector(self):
         self.stars.populateDetector("Foobar")

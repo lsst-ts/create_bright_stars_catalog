@@ -9,12 +9,24 @@ MaxRAPixel = 4095
 MinDeclPixel = 0
 MaxDeclPixel = 2047
 
+def obsMag(stars, index):
+    return stars.ObsMag[index]
+    
+def lsstMag(stars, index):
+    return stars.LSSTMag[index]
+
 class SkyCoverageResult(object):
     def __init__(self):
-        self.Index = []
-        self.NumberBelowCriteria = []
-        self.NumberInCriteria = []
-        self.NumberAboveCriteria = []
+        self.LSSTIndex = []
+        self.LSSTNumberBelowCriteria = []
+        self.LSSTNumberInCriteria = []
+        self.LSSTNumberAboveCriteria = []
+        self.LSSTNumberIgnored = []
+        self.ObsIndex = []
+        self.ObsNumberBelowCriteria = []
+        self.ObsNumberInCriteria = []
+        self.ObsNumberAboveCriteria = []
+        self.ObsNumberIgnored = []
     
 class SkyCoverageSurvey(object):
     def processStars(self, stars, lowMagnitude, highMagnitude, maxDistance):
@@ -30,10 +42,47 @@ class SkyCoverageSurvey(object):
         
         @param maxDistance [in] The maximum distance in mm to check around a candidate star.
         """
-        allStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in range(len(stars.RAInMM))]
-        candidateStar = [index for index in range(len(stars.RAInMM)) if self.isCandidateStar(lowMagnitude, highMagnitude, maxDistance, stars.RAInPixel[index], stars.DeclInPixel[index], stars.Mag[index])]
-        candidateStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in candidateStar]
+        
+        lsstIndex, lsstNumberBelowCriteria, lsstNumberInCriteria, lsstNumberAboveCriteria, lsstNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, False, lsstMag)
+        obsIndex, obsNumberBelowCriteria, obsNumberInCriteria, obsNumberAboveCriteria, obsNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, True, obsMag)
+        
         result = SkyCoverageResult()
+        result.LSSTIndex += lsstIndex
+        result.LSSTNumberBelowCriteria += lsstNumberBelowCriteria
+        result.LSSTNumberInCriteria += lsstNumberInCriteria
+        result.LSSTNumberAboveCriteria += lsstNumberAboveCriteria
+        result.LSSTNumberIgnored += lsstNumberIgnored
+        result.ObsIndex += obsIndex
+        result.ObsNumberBelowCriteria += obsNumberBelowCriteria
+        result.ObsNumberInCriteria += obsNumberInCriteria
+        result.ObsNumberAboveCriteria += obsNumberAboveCriteria
+        result.ObsNumberIgnored += obsNumberIgnored
+                        
+        return result
+        
+    def processStarsInternal(self, stars, lowMagnitude, highMagnitude, maxDistance, ignoreNeg99, magnitudeLambda):
+        """
+        Takes a list of stars and determines which stars are candidates for wave front sensing by looking at their
+        distance from the edge of the detector, and their magnitude.
+        
+        @param stars [in] The input set of stars that are on the detector and have had their *InMM fields populated.
+        
+        @param lowMagnitude [in] The minimum magnitude (magnitude that causes detector saturation).
+        
+        @param highMagnitude [in] The maximum magnitude (magnitude that is too dim to get good signal to noise).
+        
+        @param maxDistance [in] The maximum distance in mm to check around a candidate star.
+        
+        @param magnitudeLambda [in] The method used to grab the magnitude.
+        """
+        allStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in range(len(stars.RAInMM))]
+        candidateStar = [index for index in range(len(stars.RAInMM)) if self.isCandidateStar(lowMagnitude, highMagnitude, maxDistance, stars.RAInPixel[index], stars.DeclInPixel[index], magnitudeLambda(stars, index))]
+        candidateStarData = [[stars.RAInMM[index], stars.DeclInMM[index]] for index in candidateStar]
+        indexResult = []
+        numberBelowCriteriaResult = []
+        numberInCriteriaResult = []
+        numberAboveCriteriaResult = []
+        numberIgnoredResult = []
         if len(candidateStarData) > 0:
             starDistances = scipy.spatial.distance.cdist(candidateStarData, allStarData)
             for candidateIndex in range(len(candidateStarData)):
@@ -41,22 +90,27 @@ class SkyCoverageSurvey(object):
                 numberBelowCriteria = 0
                 numberInCriteria = -1
                 numberAboveCriteria = 0
+                numberIgnored = 0
                 for index in range(len(allStarData)):
                     distance = candidateDistances[index]
+                    magnitude = magnitudeLambda(stars, index)
                     if distance <= maxDistance:
-                        if stars.Mag[index] < lowMagnitude:
+                        if ignoreNeg99 and magnitude == -99:
+                            numberIgnored += 1
+                        elif magnitude < lowMagnitude:
                             numberBelowCriteria += 1
-                        elif stars.Mag[index] > highMagnitude:
+                        elif magnitude > highMagnitude:
                             numberAboveCriteria += 1
                         else:
                             numberInCriteria += 1
 
-                result.Index.append(candidateStar[candidateIndex])
-                result.NumberBelowCriteria.append(numberBelowCriteria)
-                result.NumberInCriteria.append(numberInCriteria)
-                result.NumberAboveCriteria.append(numberAboveCriteria)
-        return result
-        
+                indexResult.append(candidateStar[candidateIndex])
+                numberBelowCriteriaResult.append(numberBelowCriteria)
+                numberInCriteriaResult.append(numberInCriteria)
+                numberAboveCriteriaResult.append(numberAboveCriteria)
+                numberIgnoredResult.append(numberIgnored)
+        return indexResult, numberAboveCriteriaResult, numberInCriteriaResult, numberAboveCriteriaResult, numberIgnoredResult
+
     def isCandidateStar(self, lowMagnitude, highMagnitude, maxDistance, raInPixel, declInPixel, mag):
         """
         Returns true if the candidate star is far enough away from the edge of the sensor and is in
@@ -85,7 +139,7 @@ class SkyCoverageSurveyTest(unittest.TestCase):
     survey = None
     
     def setUp(self):
-        self.stars = StarData.StarData([100, 200, 300], [1, 2, 3], [4, 5, 6], [7, 8, 9])
+        self.stars = StarData.StarData([100, 200, 300], [1, 2, 3], [4, 5, 6], [7, 8, 9], [7, 8, 9])
         self.stars.populateDetector("Foobar")
         self.survey = SkyCoverageSurvey()
         
@@ -97,148 +151,148 @@ class SkyCoverageSurveyTest(unittest.TestCase):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 10, 10, 2.4)
-        self.assertEqual(len(data.Index), 0)
-        self.assertEqual(len(data.NumberBelowCriteria), 0)
-        self.assertEqual(len(data.NumberInCriteria), 0)
-        self.assertEqual(len(data.NumberAboveCriteria), 0)
+        self.assertEqual(len(data.LSSTIndex), 0)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 0)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 0)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 0)
 
     def test1Bright(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         print self.stars.RAInPixel
         data = self.survey.processStars(self.stars, 8, 8, 2.4)
-        self.assertEqual(len(data.Index), 1)
-        self.assertEqual(len(data.NumberBelowCriteria), 1)
-        self.assertEqual(len(data.NumberInCriteria), 1)
-        self.assertEqual(len(data.NumberAboveCriteria), 1)
-        self.assertEqual(data.Index[0], 1)
-        self.assertEqual(data.NumberBelowCriteria[0], 1)
-        self.assertEqual(data.NumberInCriteria[0], 0)
-        self.assertEqual(data.NumberAboveCriteria[0], 0)
+        self.assertEqual(len(data.LSSTIndex), 1)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 1)
+        self.assertEqual(data.LSSTIndex[0], 1)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 1)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 0)
     
     def test2Bright(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 9, 9, 4)
-        self.assertEqual(len(data.Index), 1)
-        self.assertEqual(len(data.NumberBelowCriteria), 1)
-        self.assertEqual(len(data.NumberInCriteria), 1)
-        self.assertEqual(len(data.NumberAboveCriteria), 1)
-        self.assertEqual(data.Index[0], 2)
-        self.assertEqual(data.NumberBelowCriteria[0], 2)
-        self.assertEqual(data.NumberInCriteria[0], 0)
-        self.assertEqual(data.NumberAboveCriteria[0], 0)
+        self.assertEqual(len(data.LSSTIndex), 1)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 1)
+        self.assertEqual(data.LSSTIndex[0], 2)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 2)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 0)
     
     def test1Ok(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 8, 2.4)
-        self.assertEqual(len(data.Index), 2)
-        self.assertEqual(len(data.NumberBelowCriteria), 2)
-        self.assertEqual(len(data.NumberInCriteria), 2)
-        self.assertEqual(len(data.NumberAboveCriteria), 2)
-        self.assertEqual(data.Index[0], 0)
-        self.assertEqual(data.NumberBelowCriteria[0], 0)
-        self.assertEqual(data.NumberInCriteria[0], 1)
-        self.assertEqual(data.NumberAboveCriteria[0], 0)
-        self.assertEqual(data.Index[1], 1)
-        self.assertEqual(data.NumberBelowCriteria[1], 0)
-        self.assertEqual(data.NumberInCriteria[1], 1)
-        self.assertEqual(data.NumberAboveCriteria[1], 0)
+        self.assertEqual(len(data.LSSTIndex), 2)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 2)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 2)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 2)
+        self.assertEqual(data.LSSTIndex[0], 0)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 1)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 0)
+        self.assertEqual(data.LSSTIndex[1], 1)
+        self.assertEqual(data.LSSTNumberBelowCriteria[1], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[1], 1)
+        self.assertEqual(data.LSSTNumberAboveCriteria[1], 0)
     
     def test2Ok(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 9, 4)
-        self.assertEqual(len(data.Index), 3)
-        self.assertEqual(len(data.NumberBelowCriteria), 3)
-        self.assertEqual(len(data.NumberInCriteria), 3)
-        self.assertEqual(len(data.NumberAboveCriteria), 3)
-        self.assertEqual(data.Index[0], 0)
-        self.assertEqual(data.NumberBelowCriteria[0], 0)
-        self.assertEqual(data.NumberInCriteria[0], 2)
-        self.assertEqual(data.NumberAboveCriteria[0], 0)
-        self.assertEqual(data.Index[1], 1)
-        self.assertEqual(data.NumberBelowCriteria[1], 0)
-        self.assertEqual(data.NumberInCriteria[1], 2)
-        self.assertEqual(data.NumberAboveCriteria[1], 0)
-        self.assertEqual(data.Index[2], 2)
-        self.assertEqual(data.NumberBelowCriteria[2], 0)
-        self.assertEqual(data.NumberInCriteria[2], 2)
-        self.assertEqual(data.NumberAboveCriteria[2], 0)
+        self.assertEqual(len(data.LSSTIndex), 3)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 3)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 3)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 3)
+        self.assertEqual(data.LSSTIndex[0], 0)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 2)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 0)
+        self.assertEqual(data.LSSTIndex[1], 1)
+        self.assertEqual(data.LSSTNumberBelowCriteria[1], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[1], 2)
+        self.assertEqual(data.LSSTNumberAboveCriteria[1], 0)
+        self.assertEqual(data.LSSTIndex[2], 2)
+        self.assertEqual(data.LSSTNumberBelowCriteria[2], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[2], 2)
+        self.assertEqual(data.LSSTNumberAboveCriteria[2], 0)
     
     def test1Dim(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 7, 2.4)
-        self.assertEqual(len(data.Index), 1)
-        self.assertEqual(len(data.NumberBelowCriteria), 1)
-        self.assertEqual(len(data.NumberInCriteria), 1)
-        self.assertEqual(len(data.NumberAboveCriteria), 1)
-        self.assertEqual(data.Index[0], 0)
-        self.assertEqual(data.NumberBelowCriteria[0], 0)
-        self.assertEqual(data.NumberInCriteria[0], 0)
-        self.assertEqual(data.NumberAboveCriteria[0], 1)
+        self.assertEqual(len(data.LSSTIndex), 1)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 1)
+        self.assertEqual(data.LSSTIndex[0], 0)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 1)
 
     def test2Dim(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 7, 4)
-        self.assertEqual(len(data.Index), 1)
-        self.assertEqual(len(data.NumberBelowCriteria), 1)
-        self.assertEqual(len(data.NumberInCriteria), 1)
-        self.assertEqual(len(data.NumberAboveCriteria), 1)
-        self.assertEqual(data.Index[0], 0)
-        self.assertEqual(data.NumberBelowCriteria[0], 0)
-        self.assertEqual(data.NumberInCriteria[0], 0)
-        self.assertEqual(data.NumberAboveCriteria[0], 2)
+        self.assertEqual(len(data.LSSTIndex), 1)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 1)
+        self.assertEqual(data.LSSTIndex[0], 0)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 2)
     
     def test1Bright1Ok(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 8, 9, 4)
-        self.assertEqual(len(data.Index), 2)
-        self.assertEqual(len(data.NumberBelowCriteria), 2)
-        self.assertEqual(len(data.NumberInCriteria), 2)
-        self.assertEqual(len(data.NumberAboveCriteria), 2)
-        self.assertEqual(data.Index[0], 1)
-        self.assertEqual(data.NumberBelowCriteria[0], 1)
-        self.assertEqual(data.NumberInCriteria[0], 1)
-        self.assertEqual(data.NumberAboveCriteria[0], 0)
-        self.assertEqual(data.Index[1], 2)
-        self.assertEqual(data.NumberBelowCriteria[1], 1)
-        self.assertEqual(data.NumberInCriteria[1], 1)
-        self.assertEqual(data.NumberAboveCriteria[1], 0)
+        self.assertEqual(len(data.LSSTIndex), 2)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 2)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 2)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 2)
+        self.assertEqual(data.LSSTIndex[0], 1)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 1)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 1)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 0)
+        self.assertEqual(data.LSSTIndex[1], 2)
+        self.assertEqual(data.LSSTNumberBelowCriteria[1], 1)
+        self.assertEqual(data.LSSTNumberInCriteria[1], 1)
+        self.assertEqual(data.LSSTNumberAboveCriteria[1], 0)
     
     def test1Ok1Dim(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 7, 8, 4)
-        self.assertEqual(len(data.Index), 2)
-        self.assertEqual(len(data.NumberBelowCriteria), 2)
-        self.assertEqual(len(data.NumberInCriteria), 2)
-        self.assertEqual(len(data.NumberAboveCriteria), 2)
-        self.assertEqual(data.Index[0], 0)
-        self.assertEqual(data.NumberBelowCriteria[0], 0)
-        self.assertEqual(data.NumberInCriteria[0], 1)
-        self.assertEqual(data.NumberAboveCriteria[0], 1)
-        self.assertEqual(data.Index[1], 1)
-        self.assertEqual(data.NumberBelowCriteria[1], 0)
-        self.assertEqual(data.NumberInCriteria[1], 1)
-        self.assertEqual(data.NumberAboveCriteria[1], 1)
+        self.assertEqual(len(data.LSSTIndex), 2)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 2)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 2)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 2)
+        self.assertEqual(data.LSSTIndex[0], 0)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 1)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 1)
+        self.assertEqual(data.LSSTIndex[1], 1)
+        self.assertEqual(data.LSSTNumberBelowCriteria[1], 0)
+        self.assertEqual(data.LSSTNumberInCriteria[1], 1)
+        self.assertEqual(data.LSSTNumberAboveCriteria[1], 1)
    
     def test1Dim1Bright(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
         data = self.survey.processStars(self.stars, 8, 8, 4)
-        self.assertEqual(len(data.Index), 1)
-        self.assertEqual(len(data.NumberBelowCriteria), 1)
-        self.assertEqual(len(data.NumberInCriteria), 1)
-        self.assertEqual(len(data.NumberAboveCriteria), 1)
-        self.assertEqual(data.Index[0], 1)
-        self.assertEqual(data.NumberBelowCriteria[0], 1)
-        self.assertEqual(data.NumberInCriteria[0], 0)
-        self.assertEqual(data.NumberAboveCriteria[0], 1)
+        self.assertEqual(len(data.LSSTIndex), 1)
+        self.assertEqual(len(data.LSSTNumberBelowCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberInCriteria), 1)
+        self.assertEqual(len(data.LSSTNumberAboveCriteria), 1)
+        self.assertEqual(data.LSSTIndex[0], 1)
+        self.assertEqual(data.LSSTNumberBelowCriteria[0], 1)
+        self.assertEqual(data.LSSTNumberInCriteria[0], 0)
+        self.assertEqual(data.LSSTNumberAboveCriteria[0], 1)
 
 if __name__ == "__main__":
     unittest.main()
