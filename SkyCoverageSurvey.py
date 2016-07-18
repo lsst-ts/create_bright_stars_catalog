@@ -109,7 +109,7 @@ class SkyCoverageSurvey(object):
                 numberInCriteriaResult.append(numberInCriteria)
                 numberAboveCriteriaResult.append(numberAboveCriteria)
                 numberIgnoredResult.append(numberIgnored)
-        return indexResult, numberAboveCriteriaResult, numberInCriteriaResult, numberAboveCriteriaResult, numberIgnoredResult
+        return indexResult, numberBelowCriteriaResult, numberInCriteriaResult, numberAboveCriteriaResult, numberIgnoredResult
 
     def isCandidateStar(self, lowMagnitude, highMagnitude, maxDistance, raInPixel, declInPixel, mag):
         """
