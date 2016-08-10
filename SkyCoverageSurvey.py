@@ -12,8 +12,14 @@ MaxDeclPixel = 2047
 def obsMag(stars, index):
     return stars.ObsMag[index]
     
+def obsNewMag(stars, index):
+    return stars.ObsMagNew[index]
+    
 def lsstMag(stars, index):
     return stars.LSSTMag[index]
+    
+def lsstMagNoATM(stars, index):
+    return stars.LSSTMagNoATM[index]
 
 class SkyCoverageResult(object):
     def __init__(self):
@@ -22,11 +28,21 @@ class SkyCoverageResult(object):
         self.LSSTNumberInCriteria = []
         self.LSSTNumberAboveCriteria = []
         self.LSSTNumberIgnored = []
+        self.LSSTNoATMIndex = []
+        self.LSSTNoATMNumberBelowCriteria = []
+        self.LSSTNoATMNumberInCriteria = []
+        self.LSSTNoATMNumberAboveCriteria = []
+        self.LSSTNoATMNumberIgnored = []
         self.ObsIndex = []
         self.ObsNumberBelowCriteria = []
         self.ObsNumberInCriteria = []
         self.ObsNumberAboveCriteria = []
         self.ObsNumberIgnored = []
+        self.ObsNewIndex = []
+        self.ObsNewNumberBelowCriteria = []
+        self.ObsNewNumberInCriteria = []
+        self.ObsNewNumberAboveCriteria = []
+        self.ObsNewNumberIgnored = []
     
 class SkyCoverageSurvey(object):
     def processStars(self, stars, lowMagnitude, highMagnitude, maxDistance):
@@ -44,7 +60,9 @@ class SkyCoverageSurvey(object):
         """
         
         lsstIndex, lsstNumberBelowCriteria, lsstNumberInCriteria, lsstNumberAboveCriteria, lsstNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, False, lsstMag)
+        lsstNoAtmIndex, lsstNoAtmNumberBelowCriteria, lsstNoAtmNumberInCriteria, lsstNoAtmNumberAboveCriteria, lsstNoAtmNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, False, lsstMagNoATM)
         obsIndex, obsNumberBelowCriteria, obsNumberInCriteria, obsNumberAboveCriteria, obsNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, True, obsMag)
+        obsNewIndex, obsNewNumberBelowCriteria, obsNewNumberInCriteria, obsNewNumberAboveCriteria, obsNewNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, True, obsNewMag)
         
         result = SkyCoverageResult()
         result.LSSTIndex += lsstIndex
@@ -52,11 +70,21 @@ class SkyCoverageSurvey(object):
         result.LSSTNumberInCriteria += lsstNumberInCriteria
         result.LSSTNumberAboveCriteria += lsstNumberAboveCriteria
         result.LSSTNumberIgnored += lsstNumberIgnored
+        result.LSSTNoATMIndex += lsstNoAtmIndex
+        result.LSSTNoATMNumberBelowCriteria += lsstNoAtmNumberBelowCriteria
+        result.LSSTNoATMNumberInCriteria += lsstNoAtmNumberInCriteria
+        result.LSSTNoATMNumberAboveCriteria += lsstNoAtmNumberAboveCriteria
+        result.LSSTNoATMNumberIgnored += lsstNoAtmNumberIgnored
         result.ObsIndex += obsIndex
         result.ObsNumberBelowCriteria += obsNumberBelowCriteria
         result.ObsNumberInCriteria += obsNumberInCriteria
         result.ObsNumberAboveCriteria += obsNumberAboveCriteria
         result.ObsNumberIgnored += obsNumberIgnored
+        result.ObsNewIndex += obsNewIndex
+        result.ObsNewNumberBelowCriteria += obsNewNumberBelowCriteria
+        result.ObsNewNumberInCriteria += obsNewNumberInCriteria
+        result.ObsNewNumberAboveCriteria += obsNewNumberAboveCriteria
+        result.ObsNewNumberIgnored += obsNewNumberIgnored
                         
         return result
         

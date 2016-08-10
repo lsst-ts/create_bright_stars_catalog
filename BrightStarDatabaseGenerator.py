@@ -4,17 +4,49 @@ from os import listdir
 from os.path import isfile, join
 
 class BrightStarDatabaseGenerator:
-    startIDColumn = 1
-    raColumn = 2
-    decColumn = 3
-    flagColumn = 22
-
-    targetDecimalPlaces = 6
+    #  0 = dummy_htmid 
+    #  1 = star_id 
+    #  2 = ra 
+    #  3 = dec 
+    #  4 = mura 
+    #  5 = mudec 
+    #  6 = lon
+    #  7 = lat 
+    #  8 = sed 
+    #  9 = magnorm 
+    # 10 = flux_factor 
+    # 11 = E(B-V) 
+    # 12 = Teff 
+    # 13 = [Fe/H] 
+    # 14 = log(g) 
+    # 15 = lsst_u_noatm 
+    # 16 = lsst_g_noatm 
+    # 17 = lsst_r_noatm 
+    # 18 = lsst_i_noatm 
+    # 19 = lsst_z_noatm 
+    # 20 = lsst_y_noatm 
+    # 21 = lsst_u_atm 
+    # 22 = lsst_g_atm 
+    # 23 = lsst_r_atm 
+    # 24 = lsst_i_atm 
+    # 25 = lsst_z_atm 
+    # 26 = lsst_y_atm 
+    # 27 = sdss_u(ext) 
+    # 28 = sdss_g(ext) 
+    # 29 = sdss_r(ext) 
+    # 30 = sdss_i(ext) 
+    # 31 = sdss_z(ext) 
+    # 32 = sdss_u(raw) 
+    # 33 = sdss_g(raw) 
+    # 34 = sdss_r(raw) 
+    # 35 = sdss_i(raw) 
+    # 36 = sdss_z(raw) 
+    # 37 = color_residual 
+    # 38 = file_name
+    columns = [1, 2, 3, 4, 5, 8, 11, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
 
     directory = ""
     outputFile = ""
-    catalogFile = ""
-    sedFile = ""
     lsstFile = ""
 
     def __init__(self, directory):
@@ -25,49 +57,23 @@ class BrightStarDatabaseGenerator:
         ids = self.getIds()
         for id in ids:
             self.processId(id)
-            break
         self.closeOutputFile()
 
     def processId(self, id):
         print "%f Processing id %s" % (time.time(), id)
         self.openFiles(id)
         while True:
-            catalogLine, sedLine, lsstLine = self.readFiles()
-            if self.idIsDone(id, catalogLine, sedLine, lsstLine):
+            lsstLine = self.readFiles()
+            if self.idIsDone(id, lsstLine):
                 break
-            self.processLine(id, catalogLine, sedLine, lsstLine)
+            self.processLine(id, lsstLine)
         self.closeFiles()
 
-    def processLine(self, id, catalogLine, sedLine, lsstLine):
-        if self.shouldWriteLine(id, catalogLine, sedLine, lsstLine):
-            self.outputFile.writelines(id + "," + catalogLine + "," + sedLine + "," + lsstLine + "\n")
-
-    def shouldWriteLine(self, id, catalogLine, sedLine, lsstLine):
-        return self.checkStarID(catalogLine) and self.checkFlag(catalogLine)
-
-    def checkStarID(self, catalogLine):
-        starID = long(self.getColumn(self.startIDColumn, ",", catalogLine))
-        return True
-
-    def checkFlag(self, catalogLine):
-        flag = int(self.getColumn(self.flagColumn, ",", catalogLine))
-        return True
-
-    def getUpdatedRa(self, catalogLine):
-        ra = self.getColumn(self.raColumn, ",", catalogLine)
-        return self.getUpdatedFloat(ra, self.targetDecimalPlaces)
-
-    def getUpdatedDec(self, catalogLine):
-        dec = self.getColumn(self.decColumn, ",", catalogLine)
-        return self.getUpdatedFloat(dec, self.targetDecimalPlaces)
-
-    def getUpdatedFloat(self, text, targetDecimalPlaces):
-        decimalPlaces = self.getDecimalPlaces(text)
-        missingPlaces = targetDecimalPlaces - decimalPlaces
-        text = text.replace(".", "")
-        if missingPlaces != 0:
-            text = text + "".join(['0' for i in range(missingPlaces)])
-        return text
+    def processLine(self, id, lsstLine):
+        text = id
+        for column in self.columns:
+            text = text + "," + self.getColumn(column, ",", lsstLine)
+        self.outputFile.writelines(text + "\n")
 
     def getIds(self):
         return [self.getId(item) for item in listdir(self.directory) if self.fileIsCatalogFile(item)]
@@ -75,23 +81,13 @@ class BrightStarDatabaseGenerator:
     def getId(self, item):
         return item[:5]
 
-    def idIsDone(self, id, catalogLine, sedLine, lsstLine):
-        doneCount = 0
-        if not catalogLine:
-            doneCount = doneCount + 1
-        if not sedLine:
-            doneCount = doneCount + 1
+    def idIsDone(self, id, lsstLine):
         if not lsstLine:
-            doneCount = doneCount + 1
-        if doneCount == 0:
-            return False
-        if doneCount != 3:
-            print "ERROR with id %s" % id
             return True
-        return True
+        return False
 
     def fileIsCatalogFile(self, item):
-        return isfile(join(self.directory, item)) and item.endswith(".csv.gz")
+        return isfile(join(self.directory, item)) and item.endswith(".txt.gz")
 
     def createOutputFile(self, outputFile):
         self.outputFile = open(outputFile, "w+")
@@ -100,50 +96,17 @@ class BrightStarDatabaseGenerator:
         self.outputFile.close()
 
     def openFiles(self, id):
-        self.openCatalogFile(id)
-        self.openSEDFile(id)
         self.openLSSTFile(id)
 
     def readFiles(self):
-        return self.readCatalogFile(), self.readSEDFile(), self.readLSSTFile()
+        return self.readLSSTFile()
 
     def closeFiles(self):
-        self.closeCatalogFile()
-        self.closeSEDFile()
         self.closeLSSTFile()
 
-    def openCatalogFile(self, id):
-        # Header format
-        # id,ra,dec,mu_ra,mu_dec,B?,V?,u?,g,r,i,z?,y?,J,H,K,w1,w2,w3,w4,?,?
-        # Has no header
-        fileName = "%s.csv.gz" % id
-        self.catalogFile = gzip.open(join(self.directory, fileName))
-
-    def readCatalogFile(self):
-        return self.removeReturnNewLine(self.catalogFile.readline())
-
-    def closeCatalogFile(self):
-        self.catalogFile.close()
-
-    def openSEDFile(self, id):
-        # Header format
-        # name
-        # Has header
-        fileName = "%s.csv.gz.sedNames_unext.dat" % id
-        self.sedFile = open(join(self.directory, fileName))
-        self.sedFile.readline()
-
-    def readSEDFile(self):
-        return self.removeReturnNewLine(self.sedFile.readline())
-
-    def closeSEDFile(self):
-        self.sedFile.close()
-
     def openLSSTFile(self, id):
-        # Header format
-        # u g r i z y ebv
         # Has header
-        fileName = "%s.lsst_mags_dust.gz" % id
+        fileName = "%s.csv.gz_ebv_grid_fit.txt.gz" % id
         self.lsstFile = gzip.open(join(self.directory, fileName))
         self.lsstFile.readline()
 
@@ -155,29 +118,12 @@ class BrightStarDatabaseGenerator:
         self.lsstFile.close()
 
     def getColumn(self, column, deliminator, text):
-        endIndex = -1
-        startIndex = 0
-        for i in range(column):
-            startIndex = endIndex + 1
-            try:
-                endIndex = text.index(deliminator, startIndex)
-            except:
-                if (i + 1) == column:
-                    return text[startIndex:]
-                raise
-        return text[startIndex:endIndex]
-
-    def getDecimalPlaces(self, value):
-        try:
-            index = value.index(".")
-            return len(value[(index + 1):])
-        except:
-            return 0
+        return text.split(deliminator)[column]
 
     def removeReturnNewLine(self, text):
         return text.replace("\r", "").replace("\n", "")
 
 if __name__ == "__main__":
-    directory = "D:\\BrightStarRaw"
-    outputFile = "D:\\Temp\\brightstarraw-small.csv"
+    directory = "D:\\Temp\\RawDatabase2"
+    outputFile = "D:\\Temp\\brightstarraw2.csv"
     BrightStarDatabaseGenerator(directory).generate(outputFile)

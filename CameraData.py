@@ -79,7 +79,7 @@ class CameraData(object):
             dec = decl, 
             obs_metadata = obs,
             epoch = 2000.0,
-            chipNames = np.array([stars.Detector] * len(stars.ID)),
+            chipNames = np.array([stars.Detector] * len(stars.RA)),
             camera = self.__camera, 
            includeDistortion = True)
         stars.populateRAData(raInPixel)
@@ -95,8 +95,7 @@ class CameraData(object):
         @param obs [in] The observation meta data (found in the lsst-sims stack) that defines the pointing.
         """
         detectors = self.wavefrontFromRaDec(stars.RA, stars.Decl, obs)
-        keep = [index for index in range(len(stars.ID)) if detectors[index] == stars.Detector]
-        stars.ID = [stars.ID[index] for index in keep]
+        keep = [index for index in range(len(stars.RA)) if detectors[index] == stars.Detector]
         stars.RA = [stars.RA[index] for index in keep]
         stars.RAInPixel = [stars.RAInPixel[index] for index in keep]
         stars.RAInMM = [stars.RAInMM[index] for index in keep]
@@ -115,8 +114,7 @@ class CameraData(object):
         
         @param obs [in] The observation meta data (found in the lsst-sims stack) that defines the pointing.
         """
-        keep = [index for index in range(len(stars.ID)) if stars.RAInPixel[index] >= 0 and stars.RAInPixel[index] <= 4096 and stars.DeclInPixel[index] >= 0 and stars.DeclInPixel[index] <= 2048]
-        stars.ID = [stars.ID[index] for index in keep]
+        keep = [index for index in range(len(stars.RA)) if stars.RAInPixel[index] >= 0 and stars.RAInPixel[index] <= 4096 and stars.DeclInPixel[index] >= 0 and stars.DeclInPixel[index] <= 2048]
         stars.RA = [stars.RA[index] for index in keep]
         stars.RAInPixel = [stars.RAInPixel[index] for index in keep]
         stars.RAInMM = [stars.RAInMM[index] for index in keep]
