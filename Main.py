@@ -25,58 +25,70 @@ checkStarsOnDetector = True # Determine if the stars are on the detector before 
 
 outputPath = ""
 
-def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFilePath, detailedLSSTFilePath, detailedLSSTNoATMFilePath, detailedObsFilePath, detailedObsNewFilePath):
+summaryFile = []
+detailedLSSTFile = []
+detailedLSSTNoATMFile = []
+detailedObsFile = []
+detailedObsNewFile = []
+
+def runSurvey(cameraFilters, lowMagnitudes, highMagnitudes, maxDistances, summaryFilePath, detailedLSSTFilePath, detailedLSSTNoATMFilePath, detailedObsFilePath, detailedObsNewFilePath):
     try:
-        # Create summary file
-        # The summary file will contain high level information about each field and each detector
-        # It can be used to see total counts of stars but no detail about each star
-        summaryFile = open(summaryFilePath, "w+")
-        summaryFile.write("Camera Rotation,%f\r\n" % cameraRotation)
-        summaryFile.write("Camera Filter,%s\r\n" % cameraFilter)
-        summaryFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
-        summaryFile.write("High Magnitude,%f\r\n" % highMagnitude)
-        summaryFile.write("Max Distance,%f\r\n" % maxDistance)
-        summaryFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "Corner1RA", "Corner1Decl", "Corner2RA", "Corner2Decl", "Corner3RA", "Corner3Decl", "Corner4RA", "Corner4Decl", "Stars Queried", "Stars on Detector", "LSST Candidate Stars", "LSST No ATM Candidate Stars", "Obs Candidate Stars", "Obs New Candidate Stars", "-99 Stars"))
-    
-        # Create lsst detail file
-        # The detail file will contain low level information about each candidate star in each field on each detector
-        detailedLSSTFile = open(detailedLSSTFilePath, "w+")
-        detailedLSSTFile.write("Camera Rotation,%f\r\n" % cameraRotation)
-        detailedLSSTFile.write("Camera Filter,%s\r\n" % cameraFilter)
-        detailedLSSTFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
-        detailedLSSTFile.write("High Magnitude,%f\r\n" % highMagnitude)
-        detailedLSSTFile.write("Max Distance,%f\r\n" % maxDistance)
-        detailedLSSTFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
+        for testIndex in range(len(cameraFilters)):
+            cameraFilter = cameraFilters[testIndex]
+            lowMagnitude = lowMagnitudes[testIndex]
+            highMagnitude = highMagnitudes[testIndex]
+            maxDistance = maxDistances[testIndex]
+            
+            # Create summary file
+            # The summary file will contain high level information about each field and each detector
+            # It can be used to see total counts of stars but no detail about each star
+            summaryFile.append(open(summaryFilePath % (cameraFilter, maxDistance), "w+"))
+            summaryFile[testIndex].write("Camera Rotation,%f,,,,,,,,,,,,,,,,,,\r\n" % cameraRotation)
+            summaryFile[testIndex].write("Camera Filter,%s,,,,,,,,,,,,,,,,,,\r\n" % cameraFilter)
+            summaryFile[testIndex].write("Low Magnitude,%f,,,,,,,,,,,,,,,,,,\r\n" % lowMagnitude)
+            summaryFile[testIndex].write("High Magnitude,%f,,,,,,,,,,,,,,,,,,\r\n" % highMagnitude)
+            summaryFile[testIndex].write("Max Distance,%f,,,,,,,,,,,,,,,,,,\r\n" % maxDistance)
+            summaryFile[testIndex].write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "Corner1RA", "Corner1Decl", "Corner2RA", "Corner2Decl", "Corner3RA", "Corner3Decl", "Corner4RA", "Corner4Decl", "Stars Queried", "Stars on Detector", "LSST Candidate Stars", "LSST No ATM Candidate Stars", "Obs Candidate Stars", "Obs New Candidate Stars", "-99 Stars"))
         
-        # Create lsst detail no atm file
-        # The detail file will contain low level information about each candidate star in each field on each detector
-        detailedLSSTNoATMFile = open(detailedLSSTNoATMFilePath, "w+")
-        detailedLSSTNoATMFile.write("Camera Rotation,%f\r\n" % cameraRotation)
-        detailedLSSTNoATMFile.write("Camera Filter,%s\r\n" % cameraFilter)
-        detailedLSSTNoATMFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
-        detailedLSSTNoATMFile.write("High Magnitude,%f\r\n" % highMagnitude)
-        detailedLSSTNoATMFile.write("Max Distance,%f\r\n" % maxDistance)
-        detailedLSSTNoATMFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
-        
-        # Create obs detail file
-        # The detail file will contain low level information about each candidate star in each field on each detector
-        detailedObsFile = open(detailedObsFilePath, "w+")
-        detailedObsFile.write("Camera Rotation,%f\r\n" % cameraRotation)
-        detailedObsFile.write("Camera Filter,%s\r\n" % cameraFilter)
-        detailedObsFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
-        detailedObsFile.write("High Magnitude,%f\r\n" % highMagnitude)
-        detailedObsFile.write("Max Distance,%f\r\n" % maxDistance)
-        detailedObsFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
-        
-        # Create obs detail new file
-        # The detail file will contain low level information about each candidate star in each field on each detector
-        detailedObsNewFile = open(detailedObsNewFilePath, "w+")
-        detailedObsNewFile.write("Camera Rotation,%f\r\n" % cameraRotation)
-        detailedObsNewFile.write("Camera Filter,%s\r\n" % cameraFilter)
-        detailedObsNewFile.write("Low Magnitude,%f\r\n" % lowMagnitude)
-        detailedObsNewFile.write("High Magnitude,%f\r\n" % highMagnitude)
-        detailedObsNewFile.write("Max Distance,%f\r\n" % maxDistance)
-        detailedObsNewFile.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
+            # Create lsst detail file
+            # The detail file will contain low level information about each candidate star in each field on each detector
+            detailedLSSTFile.append(open(detailedLSSTFilePath % (cameraFilter, maxDistance), "w+"))
+            detailedLSSTFile[testIndex].write("Camera Rotation,%f,,,,,,,,,,\r\n" % cameraRotation)
+            detailedLSSTFile[testIndex].write("Camera Filter,%s,,,,,,,,,,\r\n" % cameraFilter)
+            detailedLSSTFile[testIndex].write("Low Magnitude,%f,,,,,,,,,,\r\n" % lowMagnitude)
+            detailedLSSTFile[testIndex].write("High Magnitude,%f,,,,,,,,,,\r\n" % highMagnitude)
+            detailedLSSTFile[testIndex].write("Max Distance,%f,,,,,,,,,,\r\n" % maxDistance)
+            detailedLSSTFile[testIndex].write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
+            
+            # Create lsst detail no atm file
+            # The detail file will contain low level information about each candidate star in each field on each detector
+            detailedLSSTNoATMFile.append(open(detailedLSSTNoATMFilePath % (cameraFilter, maxDistance), "w+"))
+            detailedLSSTNoATMFile[testIndex].write("Camera Rotation,%f,,,,,,,,,,\r\n" % cameraRotation)
+            detailedLSSTNoATMFile[testIndex].write("Camera Filter,%s,,,,,,,,,,\r\n" % cameraFilter)
+            detailedLSSTNoATMFile[testIndex].write("Low Magnitude,%f,,,,,,,,,,\r\n" % lowMagnitude)
+            detailedLSSTNoATMFile[testIndex].write("High Magnitude,%f,,,,,,,,,,\r\n" % highMagnitude)
+            detailedLSSTNoATMFile[testIndex].write("Max Distance,%f,,,,,,,,,,\r\n" % maxDistance)
+            detailedLSSTNoATMFile[testIndex].write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
+            
+            # Create obs detail file
+            # The detail file will contain low level information about each candidate star in each field on each detector
+            detailedObsFile.append(open(detailedObsFilePath % (cameraFilter, maxDistance), "w+"))
+            detailedObsFile[testIndex].write("Camera Rotation,%f,,,,,,,,,,\r\n" % cameraRotation)
+            detailedObsFile[testIndex].write("Camera Filter,%s,,,,,,,,,,\r\n" % cameraFilter)
+            detailedObsFile[testIndex].write("Low Magnitude,%f,,,,,,,,,,\r\n" % lowMagnitude)
+            detailedObsFile[testIndex].write("High Magnitude,%f,,,,,,,,,,\r\n" % highMagnitude)
+            detailedObsFile[testIndex].write("Max Distance,%f,,,,,,,,,,\r\n" % maxDistance)
+            detailedObsFile[testIndex].write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
+            
+            # Create obs detail new file
+            # The detail file will contain low level information about each candidate star in each field on each detector
+            detailedObsNewFile.append(open(detailedObsNewFilePath % (cameraFilter, maxDistance), "w+"))
+            detailedObsNewFile[testIndex].write("Camera Rotation,%f,,,,,,,,,,\r\n" % cameraRotation)
+            detailedObsNewFile[testIndex].write("Camera Filter,%s,,,,,,,,,,\r\n" % cameraFilter)
+            detailedObsNewFile[testIndex].write("Low Magnitude,%f,,,,,,,,,,\r\n" % lowMagnitude)
+            detailedObsNewFile[testIndex].write("High Magnitude,%f,,,,,,,,,,\r\n" % highMagnitude)
+            detailedObsNewFile[testIndex].write("Max Distance,%f,,,,,,,,,,\r\n" % maxDistance)
+            detailedObsNewFile[testIndex].write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Detector", "StarRA", "StarDecl", "StarMag", "BrightNeighbors", "OkNeighbors", "DimNeighbors", "IgnoredNeighbors"))
 
         # Setup databases, simulations, and survey
         brightStarDatabase = BrightStarDatabase.BrightStarDatabase()
@@ -100,7 +112,7 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
                 wavefrontSensor = wavefrontSensors[detector]
                 
                 # Get stars in this wavefront sensor for this observation field
-                stars = brightStarDatabase.query(cameraFilter, wavefrontSensor[0], wavefrontSensor[1], wavefrontSensor[2], wavefrontSensor[3])
+                stars = brightStarDatabase.query(wavefrontSensor[0], wavefrontSensor[1], wavefrontSensor[2], wavefrontSensor[3])
                 starsQueried = len(stars.RA)
                 print "\t\tStars queried %d" % starsQueried
                 
@@ -116,93 +128,105 @@ def runSurvey(cameraFilter, lowMagnitude, highMagnitude, maxDistance, summaryFil
 
                 starsOnDetector = len(stars.RA)
                 print "\t\tStars on detector %d" % starsOnDetector
-
+                
                 # Process star data
-                results = survey.processStars(stars, lowMagnitude, highMagnitude, maxDistance)
-                lsstCandidateStars = len(results.LSSTIndex)
-                print "\t\tLSST Candidate stars %d" % lsstCandidateStars
-                lsstNoATMCandidateStars = len(results.LSSTNoATMIndex)
-                print "\t\tLSST No ATM Candidate stars %d" % lsstNoATMCandidateStars
-                obsCandidateStars = len(results.ObsIndex)
-                print "\t\tObs Candidate stars %d" % obsCandidateStars
-                obsNewCandidateStars = len(results.ObsNewIndex)
-                print "\t\tObs New Candidate stars %d" % obsNewCandidateStars
-                
-                # Determine number of -99 stars
-                neg99Count = 0
-                for starIndex in range(len(stars.RA)):
-                    if stars.ObsMag[starIndex] == -99:
-                        neg99Count += 1
-                print "\t\t-99 Stars %d" % neg99Count
-                
-                # Log summary results
-                currentTime = time.time()
-                summaryFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], detector, wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1], starsQueried, starsOnDetector, lsstCandidateStars, lsstNoATMCandidateStars, obsCandidateStars, obsNewCandidateStars, neg99Count))
-                
-                # Log lsst detailed results
-                for resultIndex in range(len(results.LSSTIndex)):
-                    cameraRA = fieldRA[index]
-                    cameraDecl = fieldDecl[index]
-                    detector = detector
-                    starIndex = results.LSSTIndex[resultIndex]
-                    starRA = stars.RA[starIndex]
-                    starDecl = stars.Decl[starIndex]
-                    starMag = stars.LSSTMag[starIndex]
-                    brightNeighbors = results.LSSTNumberBelowCriteria[resultIndex]
-                    okNeighbors = results.LSSTNumberInCriteria[resultIndex]
-                    dimNeighbors = results.LSSTNumberAboveCriteria[resultIndex]
-                    ignoredNeighbors = results.LSSTNumberIgnored[resultIndex]
-                    detailedLSSTFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))
+                for testIndex in range(len(cameraFilters)):
+                    cameraFilter = cameraFilters[testIndex]
+                    lowMagnitude = lowMagnitudes[testIndex]
+                    highMagnitude = highMagnitudes[testIndex]
+                    maxDistance = maxDistances[testIndex]
                     
-                # Log lsst no atm detailed results
-                for resultIndex in range(len(results.LSSTNoATMIndex)):
-                    cameraRA = fieldRA[index]
-                    cameraDecl = fieldDecl[index]
-                    detector = detector
-                    starIndex = results.LSSTNoATMIndex[resultIndex]
-                    starRA = stars.RA[starIndex]
-                    starDecl = stars.Decl[starIndex]
-                    starMag = stars.LSSTMagNoATM[starIndex]
-                    brightNeighbors = results.LSSTNoATMNumberBelowCriteria[resultIndex]
-                    okNeighbors = results.LSSTNoATMNumberInCriteria[resultIndex]
-                    dimNeighbors = results.LSSTNoATMNumberAboveCriteria[resultIndex]
-                    ignoredNeighbors = results.LSSTNoATMNumberIgnored[resultIndex]
-                    detailedLSSTNoATMFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))    
+                    print "\t\tFilter %s Distance %.3f" % (cameraFilter, maxDistance)
                     
-                # Log obs detailed results
-                for resultIndex in range(len(results.ObsIndex)):
-                    cameraRA = fieldRA[index]
-                    cameraDecl = fieldDecl[index]
-                    detector = detector
-                    starIndex = results.ObsIndex[resultIndex]
-                    starRA = stars.RA[starIndex]
-                    starDecl = stars.Decl[starIndex]
-                    starMag = stars.ObsMag[starIndex]
-                    brightNeighbors = results.ObsNumberBelowCriteria[resultIndex]
-                    okNeighbors = results.ObsNumberInCriteria[resultIndex]
-                    dimNeighbors = results.ObsNumberAboveCriteria[resultIndex]
-                    ignoredNeighbors = results.ObsNumberIgnored[resultIndex]
-                    detailedObsFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))    
+                    results, obsMagLambda, obsMagNewLambda, lsstMagLambda, lsstMagNoATMLambda = survey.processStars(stars, cameraFilter, lowMagnitude, highMagnitude, maxDistance)
+                    lsstCandidateStars = len(results.LSSTIndex)
+                    print "\t\t\tLSST Candidate stars %d" % lsstCandidateStars
+                    lsstNoATMCandidateStars = len(results.LSSTNoATMIndex)
+                    print "\t\t\tLSST No ATM Candidate stars %d" % lsstNoATMCandidateStars
+                    obsCandidateStars = len(results.ObsIndex)
+                    print "\t\t\tObs Candidate stars %d" % obsCandidateStars
+                    obsNewCandidateStars = len(results.ObsNewIndex)
+                    print "\t\t\tObs New Candidate stars %d" % obsNewCandidateStars
                     
-                # Log obs detailed results
-                for resultIndex in range(len(results.ObsNewIndex)):
-                    cameraRA = fieldRA[index]
-                    cameraDecl = fieldDecl[index]
-                    detector = detector
-                    starIndex = results.ObsNewIndex[resultIndex]
-                    starRA = stars.RA[starIndex]
-                    starDecl = stars.Decl[starIndex]
-                    starMag = stars.ObsMag[starIndex]
-                    brightNeighbors = results.ObsNewNumberBelowCriteria[resultIndex]
-                    okNeighbors = results.ObsNewNumberInCriteria[resultIndex]
-                    dimNeighbors = results.ObsNewNumberAboveCriteria[resultIndex]
-                    ignoredNeighbors = results.ObsNewNumberIgnored[resultIndex]
-                    detailedObsNewFile.write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))    
+                    # Determine number of -99 stars
+                    neg99Count = 0
+                    for starIndex in range(len(stars.RA)):
+                        if obsMagLambda(stars, starIndex) == -99:
+                            neg99Count += 1
+                    print "\t\t\t-99 Stars %d" % neg99Count
+                    
+                    # Log summary results
+                    currentTime = time.time()
+                    summaryFile[testIndex].write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], detector, wavefrontSensor[0][0], wavefrontSensor[0][1], wavefrontSensor[1][0], wavefrontSensor[1][1], wavefrontSensor[2][0], wavefrontSensor[2][1], wavefrontSensor[3][0], wavefrontSensor[3][1], starsQueried, starsOnDetector, lsstCandidateStars, lsstNoATMCandidateStars, obsCandidateStars, obsNewCandidateStars, neg99Count))
+                    
+                    # Log lsst detailed results
+                    for resultIndex in range(len(results.LSSTIndex)):
+                        cameraRA = fieldRA[index]
+                        cameraDecl = fieldDecl[index]
+                        detector = detector
+                        starIndex = results.LSSTIndex[resultIndex]
+                        starRA = stars.RA[starIndex]
+                        starDecl = stars.Decl[starIndex]
+                        starMag = lsstMagLambda(stars, starIndex)
+                        brightNeighbors = results.LSSTNumberBelowCriteria[resultIndex]
+                        okNeighbors = results.LSSTNumberInCriteria[resultIndex]
+                        dimNeighbors = results.LSSTNumberAboveCriteria[resultIndex]
+                        ignoredNeighbors = results.LSSTNumberIgnored[resultIndex]
+                        detailedLSSTFile[testIndex].write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))
+                        
+                    # Log lsst no atm detailed results
+                    for resultIndex in range(len(results.LSSTNoATMIndex)):
+                        cameraRA = fieldRA[index]
+                        cameraDecl = fieldDecl[index]
+                        detector = detector
+                        starIndex = results.LSSTNoATMIndex[resultIndex]
+                        starRA = stars.RA[starIndex]
+                        starDecl = stars.Decl[starIndex]
+                        starMag = lsstMagNoATMLambda(stars, starIndex)
+                        brightNeighbors = results.LSSTNoATMNumberBelowCriteria[resultIndex]
+                        okNeighbors = results.LSSTNoATMNumberInCriteria[resultIndex]
+                        dimNeighbors = results.LSSTNoATMNumberAboveCriteria[resultIndex]
+                        ignoredNeighbors = results.LSSTNoATMNumberIgnored[resultIndex]
+                        detailedLSSTNoATMFile[testIndex].write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))    
+                        
+                    # Log obs detailed results
+                    for resultIndex in range(len(results.ObsIndex)):
+                        cameraRA = fieldRA[index]
+                        cameraDecl = fieldDecl[index]
+                        detector = detector
+                        starIndex = results.ObsIndex[resultIndex]
+                        starRA = stars.RA[starIndex]
+                        starDecl = stars.Decl[starIndex]
+                        starMag = obsMagLambda(stars, starIndex)
+                        brightNeighbors = results.ObsNumberBelowCriteria[resultIndex]
+                        okNeighbors = results.ObsNumberInCriteria[resultIndex]
+                        dimNeighbors = results.ObsNumberAboveCriteria[resultIndex]
+                        ignoredNeighbors = results.ObsNumberIgnored[resultIndex]
+                        detailedObsFile[testIndex].write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))    
+                        
+                    # Log obs detailed results
+                    for resultIndex in range(len(results.ObsNewIndex)):
+                        cameraRA = fieldRA[index]
+                        cameraDecl = fieldDecl[index]
+                        detector = detector
+                        starIndex = results.ObsNewIndex[resultIndex]
+                        starRA = stars.RA[starIndex]
+                        starDecl = stars.Decl[starIndex]
+                        starMag = obsMagNewLambda(stars, starIndex)
+                        brightNeighbors = results.ObsNewNumberBelowCriteria[resultIndex]
+                        okNeighbors = results.ObsNewNumberInCriteria[resultIndex]
+                        dimNeighbors = results.ObsNewNumberAboveCriteria[resultIndex]
+                        ignoredNeighbors = results.ObsNewNumberIgnored[resultIndex]
+                        detailedObsNewFile[testIndex].write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), cameraRA, cameraDecl, detector, starRA, starDecl, starMag, brightNeighbors, okNeighbors, dimNeighbors, ignoredNeighbors))    
 
     finally:
         # Clean up
-        summaryFile.close()
-        detailedLSSTFile.close()
+        for testIndex in range(len(cameraFilters)):
+            summaryFile[testIndex].close()
+            detailedLSSTFile[testIndex].close()
+            detailedLSSTNoATMFile[testIndex].close()
+            detailedObsFile[testIndex].close()
+            detailedObsNewFile[testIndex].close()
         brightStarDatabase.disconnect()
 
 def star_runSurvey(args):
@@ -232,18 +256,16 @@ surveyData = [
     
 # Run survey using data defined above in a single thread environment
 def runSingleThread():
-    for item in surveyData:
-        runSurvey(
-            cameraFilter = item[0], 
-            lowMagnitude = item[2], 
-            highMagnitude = item[3], 
-            maxDistance = item[1],
-            summaryFilePath = "%sSurveySummary-%s-%fmm.csv" % (outputPath, item[0], item[1]),
-            detailedLSSTFilePath = "%sSurveyLSST-%s-%fmm.csv" % (outputPath, item[0], item[1]),
-            detailedLSSTNoATMFilePath = "%sSurveyLSSTNoATM-%s-%fmm.csv" % (outputPath, item[0], item[1]),
-            detailedObsFilePath = "%sSurveyObs-%s-%fmm.csv" % (outputPath, item[0], item[1]),
-            detailedObsNewFilePath = "%sSurveyObsNew-%s-%fmm.csv" % (outputPath, item[0], item[1]))
-            
+    runSurvey(
+        cameraFilters = [item[0] for item in surveyData], 
+        lowMagnitudes = [item[2] for item in surveyData], 
+        highMagnitudes = [item[3] for item in surveyData], 
+        maxDistances = [item[1] for item in surveyData],
+        summaryFilePath = "%sSurveySummary-%s-%smm.csv" % (outputPath, "%s", "%f"),
+        detailedLSSTFilePath = "%sSurveyLSST-%s-%smm.csv" % (outputPath, "%s", "%f"),
+        detailedLSSTNoATMFilePath = "%sSurveyLSSTNoATM-%s-%smm.csv" % (outputPath, "%s", "%f"),
+        detailedObsFilePath = "%sSurveyObs-%s-%smm.csv" % (outputPath, "%s", "%f"),
+        detailedObsNewFilePath = "%sSurveyObsNew-%s-%smm.csv" % (outputPath, "%s", "%f"))
           
 # Run survey using data defined above in a multi threaded environment
 def runMultiThread():
@@ -255,5 +277,5 @@ def runMultiThread():
        
 if __name__ == "__main__":
     freeze_support()
-    runMultiThread()
+    runSingleThread()
     

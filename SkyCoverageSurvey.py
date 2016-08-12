@@ -3,23 +3,12 @@ import scipy
 import scipy.spatial
 import StarData
 import unittest
+import BrightStarDatabase
 
 MinRAPixel = 0
 MaxRAPixel = 4095
 MinDeclPixel = 0
 MaxDeclPixel = 2047
-
-def obsMag(stars, index):
-    return stars.ObsMag[index]
-    
-def obsNewMag(stars, index):
-    return stars.ObsMagNew[index]
-    
-def lsstMag(stars, index):
-    return stars.LSSTMag[index]
-    
-def lsstMagNoATM(stars, index):
-    return stars.LSSTMagNoATM[index]
 
 class SkyCoverageResult(object):
     def __init__(self):
@@ -45,12 +34,14 @@ class SkyCoverageResult(object):
         self.ObsNewNumberIgnored = []
     
 class SkyCoverageSurvey(object):
-    def processStars(self, stars, lowMagnitude, highMagnitude, maxDistance):
+    def processStars(self, stars, filter, lowMagnitude, highMagnitude, maxDistance):
         """
         Takes a list of stars and determines which stars are candidates for wave front sensing by looking at their
         distance from the edge of the detector, and their magnitude.
         
         @param stars [in] The input set of stars that are on the detector and have had their *InMM fields populated.
+        
+        @param filter [in] The filter (using BrightStarDatabase.Filter[U, G, R, I, Z, Y]) to perform calculations on.
         
         @param lowMagnitude [in] The minimum magnitude (magnitude that causes detector saturation).
         
@@ -59,10 +50,40 @@ class SkyCoverageSurvey(object):
         @param maxDistance [in] The maximum distance in mm to check around a candidate star.
         """
         
-        lsstIndex, lsstNumberBelowCriteria, lsstNumberInCriteria, lsstNumberAboveCriteria, lsstNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, False, lsstMag)
-        lsstNoAtmIndex, lsstNoAtmNumberBelowCriteria, lsstNoAtmNumberInCriteria, lsstNoAtmNumberAboveCriteria, lsstNoAtmNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, False, lsstMagNoATM)
-        obsIndex, obsNumberBelowCriteria, obsNumberInCriteria, obsNumberAboveCriteria, obsNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, True, obsMag)
-        obsNewIndex, obsNewNumberBelowCriteria, obsNewNumberInCriteria, obsNewNumberAboveCriteria, obsNewNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, True, obsNewMag)
+        obsMagLambda = lambda stars, index: stars.ObsMagU[index]
+        obsMagNewLambda = lambda stars, index: stars.ObsMagUNew[index]
+        lsstMagLambda = lambda stars, index: stars.LSSTMagU[index]
+        lsstMagNoATMLambda = lambda stars, index: stars.LSSTMagUNoATM[index]
+        if filter is BrightStarDatabase.FilterG:
+            obsMagLambda = lambda stars, index: stars.ObsMagG[index]
+            obsMagNewLambda = lambda stars, index: stars.ObsMagGNew[index]
+            lsstMagLambda = lambda stars, index: stars.LSSTMagG[index]
+            lsstMagNoATMLambda = lambda stars, index: stars.LSSTMagGNoATM[index]
+        elif filter is BrightStarDatabase.FilterR:
+            obsMagLambda = lambda stars, index: stars.ObsMagR[index]
+            obsMagNewLambda = lambda stars, index: stars.ObsMagRNew[index]
+            lsstMagLambda = lambda stars, index: stars.LSSTMagR[index]
+            lsstMagNoATMLambda = lambda stars, index: stars.LSSTMagRNoATM[index]
+        elif filter is BrightStarDatabase.FilterI:
+            obsMagLambda = lambda stars, index: stars.ObsMagI[index]
+            obsMagNewLambda = lambda stars, index: stars.ObsMagINew[index]
+            lsstMagLambda = lambda stars, index: stars.LSSTMagI[index]
+            lsstMagNoATMLambda = lambda stars, index: stars.LSSTMagINoATM[index]
+        elif filter is BrightStarDatabase.FilterZ:
+            obsMagLambda = lambda stars, index: stars.ObsMagZ[index]
+            obsMagNewLambda = lambda stars, index: stars.ObsMagZNew[index]
+            lsstMagLambda = lambda stars, index: stars.LSSTMagZ[index]
+            lsstMagNoATMLambda = lambda stars, index: stars.LSSTMagZNoATM[index]
+        elif filter is BrightStarDatabase.FilterY:
+            obsMagLambda = lambda stars, index: stars.ObsMagY[index]
+            obsMagNewLambda = lambda stars, index: stars.ObsMagYNew[index]
+            lsstMagLambda = lambda stars, index: stars.LSSTMagY[index]
+            lsstMagNoATMLambda = lambda stars, index: stars.LSSTMagYNoATM[index]            
+        
+        lsstIndex, lsstNumberBelowCriteria, lsstNumberInCriteria, lsstNumberAboveCriteria, lsstNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, False, lsstMagLambda)
+        lsstNoAtmIndex, lsstNoAtmNumberBelowCriteria, lsstNoAtmNumberInCriteria, lsstNoAtmNumberAboveCriteria, lsstNoAtmNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, False, lsstMagNoATMLambda)
+        obsIndex, obsNumberBelowCriteria, obsNumberInCriteria, obsNumberAboveCriteria, obsNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, True, obsMagLambda)
+        obsNewIndex, obsNewNumberBelowCriteria, obsNewNumberInCriteria, obsNewNumberAboveCriteria, obsNewNumberIgnored = self.processStarsInternal(stars, lowMagnitude, highMagnitude, maxDistance, True, obsMagNewLambda)
         
         result = SkyCoverageResult()
         result.LSSTIndex += lsstIndex
@@ -85,8 +106,8 @@ class SkyCoverageSurvey(object):
         result.ObsNewNumberInCriteria += obsNewNumberInCriteria
         result.ObsNewNumberAboveCriteria += obsNewNumberAboveCriteria
         result.ObsNewNumberIgnored += obsNewNumberIgnored
-                        
-        return result
+                                
+        return result, obsMagLambda, obsMagNewLambda, lsstMagLambda, lsstMagNoATMLambda
         
     def processStarsInternal(self, stars, lowMagnitude, highMagnitude, maxDistance, ignoreNeg99, magnitudeLambda):
         """
