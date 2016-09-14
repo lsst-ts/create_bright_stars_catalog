@@ -91,6 +91,8 @@ if __name__ == "__main__":
         alt, az, pa = altAzPaFromRaDec(ra, dec, obs)
 
         ra_corner, dec_corner = fovCorners(obs, side_length=20.0)
+	print ra_corner
+	print dec_corner
 
         max_orthogonal = -1.0
 

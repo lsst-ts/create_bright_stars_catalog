@@ -89,7 +89,7 @@ def runSurvey(cameraFilters, cameraRotations, lowMagnitudes, highMagnitudes, sum
              
             # Log summary results
             currentTime = time.time()
-            summaryFile[testIndex].write("%f,%d,%f,%f,\"%s\",%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], starsQueried, starsMatchingCriteria))
+            summaryFile[testIndex].write("%f,%d,%f,%f,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], starsQueried, starsMatchingCriteria))
 
     finally:
         # Clean up
@@ -129,6 +129,5 @@ def runSingleThread():
         summaryFilePath = "%sSurveySummary-%s.csv" % (outputPath, "%s"))
                  
 if __name__ == "__main__":
-    freeze_support()
     runSingleThread()
     
