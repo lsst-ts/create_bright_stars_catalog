@@ -48,12 +48,12 @@ def runSurvey(cameraFilters, cameraRotations, lowMagnitudes, highMagnitudes, sum
             # The summary file will contain high level information about each field
             # It can be used to see total counts of stars but no detail about each star
             summaryFile.append(open(summaryFilePath % (cameraFilter), "w+"))
-            summaryFile[testIndex].write("Camera Rotation,%f,,,\r\n" % cameraRotation)
-            summaryFile[testIndex].write("Camera Filter,%s,,,\r\n" % cameraFilter)
-            summaryFile[testIndex].write("Low Magnitude,%f,,,\r\n" % lowMagnitude)
-            summaryFile[testIndex].write("High Magnitude,%f,,,\r\n" % highMagnitude)
-            summaryFile[testIndex].write("Side Length,%f,,,\r\n" % sideLength)
-            summaryFile[testIndex].write("%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Stars Queried", "Stars Matching Criteria"))
+            summaryFile[testIndex].write("Camera Rotation,%f,,,,,,,,,,,\r\n" % cameraRotation)
+            summaryFile[testIndex].write("Camera Filter,%s,,,,,,,,,,,\r\n" % cameraFilter)
+            summaryFile[testIndex].write("Low Magnitude,%f,,,,,,,,,,,\r\n" % lowMagnitude)
+            summaryFile[testIndex].write("High Magnitude,%f,,,,,,,,,,,\r\n" % highMagnitude)
+            summaryFile[testIndex].write("Side Length,%f,,,,,,,,,,,\r\n" % sideLength)
+            summaryFile[testIndex].write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\r\n" % ("Timestamp", "FieldIndex", "CameraRA", "CameraDecl", "Corner 1 RA", "Corner 1 Decl", "Corner 2 RA", "Corner 2 Decl", "Corner 3 RA", "Corner 3 Decl", "Corner 4 RA", "Corner 4 Decl", "Stars Queried", "Stars Matching Criteria"))
 
         # Setup databases, simulations, and survey
         brightStarDatabase = BrightStarDatabase.BrightStarDatabase()
@@ -73,8 +73,11 @@ def runSurvey(cameraFilters, cameraRotations, lowMagnitudes, highMagnitudes, sum
             raCorner, declCorner = camera.fovCorners(obs, sideLength)
 
             # Get stars in this FoV for this observation field
+            startTime = time.time()
             stars = brightStarDatabase.query([raCorner[0], declCorner[0]], [raCorner[1], declCorner[1]], [raCorner[2], declCorner[2]], [raCorner[3], declCorner[3]])
+            stopTime = time.time()
             starsQueried = len(stars.RA)
+            print "\t\tQuery time %fs" % (stopTime - startTime)
             print "\t\tStars queried %d" % starsQueried
             
             # Get stars matching criteria
@@ -89,7 +92,7 @@ def runSurvey(cameraFilters, cameraRotations, lowMagnitudes, highMagnitudes, sum
              
             # Log summary results
             currentTime = time.time()
-            summaryFile[testIndex].write("%f,%d,%f,%f,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], starsQueried, starsMatchingCriteria))
+            summaryFile[testIndex].write("%f,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d\r\n" % (currentTime, (index + 1), fieldRA[index], fieldDecl[index], raCorner[0], declCorner[0], raCorner[1], declCorner[1], raCorner[2], declCorner[2], raCorner[3], declCorner[3], starsQueried, starsMatchingCriteria))
 
     finally:
         # Clean up
