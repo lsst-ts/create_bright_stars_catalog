@@ -5,6 +5,10 @@ from lsst.sims.utils import altAzPaFromRaDec, _lonLatFromNativeLonLat
 from lsst.sims.utils import sphericalFromCartesian, cartesianFromSpherical
 from lsst.sims.utils import _observedFromICRS, _icrsFromObserved
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 def fovCorners(obs, side_length):
     """
     obs is an ObservationMetaData
@@ -12,7 +16,8 @@ def fovCorners(obs, side_length):
     """
 
     # find the center of the field of view and convert it into "Observed RA, Dec"
-    pointing_lon, pointing_lat = _observedFromICRS(obs._pointingRA, obs._pointingDec,
+    pointing_lon, pointing_lat = _observedFromICRS(np.array([obs._pointingRA]),
+                                                   np.array([obs._pointingDec]),
                                                    obs_metadata=obs, epoch=2000.0)
 
     # figure out the length of the diagonal of your square field of view
@@ -53,7 +58,7 @@ def fovCorners(obs, side_length):
 
     # translate the field of view down to the actual telescope pointing
     ra_obs, dec_obs = _lonLatFromNativeLonLat(rot_lon, rot_lat,
-                                              pointing_lon, pointing_lat)
+                                              pointing_lon[0], pointing_lat[0])
 
     return np.degrees(_icrsFromObserved(ra_obs, dec_obs, obs_metadata=obs, epoch=2000.0))
 
@@ -99,5 +104,5 @@ if __name__ == "__main__":
         dd = distance_in_arcminutes(ra_corner[2], dec_corner[2],
                                     ra_corner[0], dec_corner[0])
 
-        d_sun = distanceToSun(ra, dec, obs.mjd)
+        d_sun = distanceToSun(ra, dec, obs.mjd.TDB)
         print 'max orthogonal errr ',max_orthogonal,ra,dec,rot,d_sun,alt
