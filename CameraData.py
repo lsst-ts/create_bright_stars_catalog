@@ -10,7 +10,7 @@ from lsst.sims.utils import _observedFromICRS, _icrsFromObserved
 
 import lsst.afw.geom as afwGeom
 # from lsst.afw.cameraGeom import PUPIL, PIXELS, TAN_PIXELS, FOCAL_PLANE
-from lsst.afw.cameraGeom import WAVEFRONT
+from lsst.afw.cameraGeom import WAVEFRONT, GUIDER
 
 # instantiate the LSST camera model
 from lsst.obs.lsstSim import LsstSimMapper
@@ -30,8 +30,9 @@ class CameraData(object):
         """
         Initializes the camera wave front detectors.
         """
+        cameraType = GUIDER
         for detector in self.__camera:
-                if detector.getType() == WAVEFRONT:
+                if detector.getType() == cameraType:
                     self.__wavefrontDetectors.append(detector)
 
                     bbox = detector.getBBox()
