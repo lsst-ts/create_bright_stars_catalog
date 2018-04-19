@@ -208,7 +208,7 @@ class SkyCoverageSurveyTest(unittest.TestCase):
     def test1Bright(self):
         self.stars.populateRAData([x / StarData.PixelSizeInMM for x in [11, 12, 15]])
         self.stars.populateDeclData([x / StarData.PixelSizeInMM for x in [11, 13, 11]])
-        print self.stars.RAInPixel
+        print(self.stars.RAInPixel)
         data = self.survey.processStars(self.stars, 8, 8, 2.4)
         self.assertEqual(len(data.LSSTIndex), 1)
         self.assertEqual(len(data.LSSTNumberBelowCriteria), 1)

@@ -14,7 +14,7 @@ brightStarDatabaseUser = "LSST-2"
 brightStarDatabasePassword = "L$$TUser"
 brightStarDatabaseDatabase = "LSSTCATSIM"
 
-fieldDatabaseFile = ".\Fields.txt"
+fieldDatabaseFile = "./Fields.txt"
 fieldDatabaseAcceptableRADecl = lambda x: x[1] <= 2 or (x[0] >= 0 and x[0] <= 12 and x[1] <= 30)
 
 cameraRotation = 0.0
@@ -23,7 +23,7 @@ cameraMJD = 59580.0
 spacingCoefficient = 2.5     # Maximum distance in units of radius one donut must be to another to be considered as a neighbor
 checkStarsOnDetector = True # Determine if the stars are on the detector before processing
 
-outputPath = ""
+outputPath = "./surveyData/"
 
 summaryFile = []
 detailedLSSTFile = []
@@ -102,19 +102,19 @@ def runSurvey(cameraFilters, lowMagnitudes, highMagnitudes, maxDistances, summar
         # Get observation fields
         fieldRA, fieldDecl = fieldDatabase.getRADecl()
         for index in range(len(fieldRA)):
-            print "Field #%d of %d" % ((index + 1), len(fieldRA))
+            print("Field #%d of %d" % ((index + 1), len(fieldRA)))
             
             # Get corners of wavefront sensors for this observation field
             obs = ObservationMetaData(pointingRA=fieldRA[index], pointingDec=fieldDecl[index], rotSkyPos=cameraRotation, mjd=cameraMJD)
             wavefrontSensors = camera.getWavefrontCorners(obs)
             for detector in wavefrontSensors:
-                print "\tProcessing detector %s" % detector
+                print("\tProcessing detector %s" % detector)
                 wavefrontSensor = wavefrontSensors[detector]
                 
                 # Get stars in this wavefront sensor for this observation field
                 stars = brightStarDatabase.query(wavefrontSensor[0], wavefrontSensor[1], wavefrontSensor[2], wavefrontSensor[3])
                 starsQueried = len(stars.RA)
-                print "\t\tStars queried %d" % starsQueried
+                print("\t\tStars queried %d" % starsQueried)
                 
                 # Populate detector information for the stars
                 stars.populateDetector(detector)
@@ -127,7 +127,7 @@ def runSurvey(cameraFilters, lowMagnitudes, highMagnitudes, maxDistances, summar
                     camera.removeStarsNotOnDetectorSimple(stars, obs)
 
                 starsOnDetector = len(stars.RA)
-                print "\t\tStars on detector %d" % starsOnDetector
+                print("\t\tStars on detector %d" % starsOnDetector)
                 
                 # Process star data
                 for testIndex in range(len(cameraFilters)):
@@ -136,24 +136,24 @@ def runSurvey(cameraFilters, lowMagnitudes, highMagnitudes, maxDistances, summar
                     highMagnitude = highMagnitudes[testIndex]
                     maxDistance = maxDistances[testIndex]
                     
-                    print "\t\tFilter %s Distance %.3f" % (cameraFilter, maxDistance)
+                    print("\t\tFilter %s Distance %.3f" % (cameraFilter, maxDistance))
                     
                     results, obsMagLambda, obsMagNewLambda, lsstMagLambda, lsstMagNoATMLambda = survey.processStars(stars, cameraFilter, lowMagnitude, highMagnitude, maxDistance)
                     lsstCandidateStars = len(results.LSSTIndex)
-                    print "\t\t\tLSST Candidate stars %d" % lsstCandidateStars
+                    print("\t\t\tLSST Candidate stars %d" % lsstCandidateStars)
                     lsstNoATMCandidateStars = len(results.LSSTNoATMIndex)
-                    print "\t\t\tLSST No ATM Candidate stars %d" % lsstNoATMCandidateStars
+                    print("\t\t\tLSST No ATM Candidate stars %d" % lsstNoATMCandidateStars)
                     obsCandidateStars = len(results.ObsIndex)
-                    print "\t\t\tObs Candidate stars %d" % obsCandidateStars
+                    print("\t\t\tObs Candidate stars %d" % obsCandidateStars)
                     obsNewCandidateStars = len(results.ObsNewIndex)
-                    print "\t\t\tObs New Candidate stars %d" % obsNewCandidateStars
+                    print("\t\t\tObs New Candidate stars %d" % obsNewCandidateStars)
                     
                     # Determine number of -99 stars
                     neg99Count = 0
                     for starIndex in range(len(stars.RA)):
                         if obsMagLambda(stars, starIndex) == -99:
                             neg99Count += 1
-                    print "\t\t\t-99 Stars %d" % neg99Count
+                    print("\t\t\t-99 Stars %d" % neg99Count)
                     
                     # Log summary results
                     currentTime = time.time()

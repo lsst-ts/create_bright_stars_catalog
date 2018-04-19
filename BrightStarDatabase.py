@@ -159,10 +159,10 @@ class BrightStarDatabaseTest(unittest.TestCase):
         
     def testFoobar(self):
         stars = self.database.query([0.01, -1], [359.99, -2], [0.01, -1], [359.99, -2])
-        print stars.ObsMagUNew
-        print stars.ObsMagU
-        print stars.LSSTMagU
-        print stars.LSSTMagUNoATM
+        print(stars.ObsMagUNew)
+        print(stars.ObsMagU)
+        print(stars.LSSTMagU)
+        print(stars.LSSTMagUNoATM)
         
     def testUQuery(self):
         stars = self.database.query([75.998622, -1], [75.998622, -2], [75.998985, -1], [75.998985, -2])
